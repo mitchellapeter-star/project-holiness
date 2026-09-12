@@ -6,3 +6,4 @@
 - [Structured A3 storage](structured-a3-storage.md) — linked Problems and Countermeasures use backward-compatible JSON in the existing A3 text fields, avoiding another schema migration.
 - [Catholic visual direction](catholic-visual-direction.md) — preserve the light parchment, forest green, muted gold, visible stained glass, serif, and restrained sacred-ornament character.
 - [Standard Work ordering](standard-work-ordering.md) — action order is scoped by frequency and persists through an additive sort-order field; legacy schemas must remain safe until migrated.
+- [GitHub repository synchronization](github-repository-sync.md) — OAuth API access works, but Git CLI credentials may not; preserve exact trees through the throttled Git Data API.
