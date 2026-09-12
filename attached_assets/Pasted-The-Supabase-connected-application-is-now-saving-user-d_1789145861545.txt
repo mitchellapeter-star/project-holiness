@@ -1,0 +1,341 @@
+The Supabase-connected application is now saving user data correctly.
+2
+ 
+3
+Before making changes, preserve the existing authentication, Supabase connection, Row Level Security, routes, and saved user data. Do not replace the working application with a demo or local-storage version.
+4
+ 
+5
+Update the application as follows.
+6
+ 
+7
+BRANDING AND VISUAL DIRECTION
+8
+ 
+9
+Make Project Holiness the main focus of the application.
+10
+ 
+11
+The application should feel recognizably Catholic, traditional, reverent, saintly, and welcoming. It should communicate that this is a practical tool to help users respond to the universal call to holiness.
+12
+ 
+13
+Use:
+14
+- Deep forest green
+15
+- Cream and parchment backgrounds
+16
+- Restrained muted-gold accents
+17
+- Traditional serif typography for headings
+18
+- Clean readable typography for forms
+19
+- Subtle Catholic visual details
+20
+- A restrained cross motif
+21
+- Minimal animation
+22
+- Reverent but clear language
+23
+ 
+24
+Do not make it feel like a corporate productivity dashboard or a generic field-notes application.
+25
+ 
+26
+SIGN-IN PAGE
+27
+ 
+28
+Make “Project Holiness” significantly larger and the primary visual focus.
+29
+ 
+30
+Use this supporting heading:
+31
+ 
+32
+“A practical plan for answering the call to holiness.”
+33
+ 
+34
+Use this description:
+35
+ 
+36
+“Reflect honestly, identify the gap, choose faithful actions, and build a consistent rule of life directed toward God.”
+37
+ 
+38
+Use clear actions for:
+39
+- Sign In
+40
+- Create Account
+41
+ 
+42
+Keep Supabase authentication working.
+43
+ 
+44
+NAVIGATION
+45
+ 
+46
+Rename “A3 Improvement” to “Project Plan A3.”
+47
+ 
+48
+Keep:
+49
+- Overview
+50
+- Project Plan A3
+51
+- Standard Work
+52
+- Calling Log
+53
+ 
+54
+PROJECT PLAN A3
+55
+ 
+56
+Replace the fixed Project Statement with:
+57
+ 
+58
+“There is a gap between where I am and the holiness I'm called to. Holiness means being set apart for God, growing toward sainthood, and conforming my will to His, the universal call every baptized person shares.
+59
+ 
+60
+If married, this call extends to one's marriage as well, since spouses are meant to help sanctify one another.”
+61
+ 
+62
+Replace the fixed Life Rationale with:
+63
+ 
+64
+“Becoming holy leads to heaven, leaves a lasting effect on ourselves and those who come after us, and greatly improves our lives and the lives of those around us. Growth in holiness is growth in love, of God and neighbor, and it bears fruit far beyond ourselves.
+65
+ 
+66
+If married, this includes a holy marriage, which shapes not only the spouses but their children as well.”
+67
+ 
+68
+Retain editable:
+69
+- Problem Assessment / Root Causes
+70
+- Countermeasures
+71
+- Action Items
+72
+ 
+73
+ACTION ITEMS
+74
+ 
+75
+Each action item must include:
+76
+- Title
+77
+- Optional description or notes
+78
+- Start date
+79
+- Frequency
+80
+- Optional due date
+81
+- Optional end date
+82
+- Completion status
+83
+- Active or inactive status
+84
+ 
+85
+Frequency options:
+86
+- Daily
+87
+- Weekly
+88
+- Monthly
+89
+- One time
+90
+- Other
+91
+ 
+92
+All action items must be created and edited from the Project Plan A3 page.
+93
+ 
+94
+STANDARD WORK
+95
+ 
+96
+Remove the “Add discipline” button and remove the ability to create standard-work items directly.
+97
+ 
+98
+Add this note:
+99
+ 
+100
+“Standard Work is generated from your Project Plan A3 action items. To add or change a practice, update the corresponding action item in your Project Plan A3.”
+101
+ 
+102
+Automatically populate Standard Work from active A3 action items.
+103
+ 
+104
+Create a monthly Leader Standard Work view inspired by a monthly spreadsheet grid.
+105
+ 
+106
+Include:
+107
+- Month and year selector
+108
+- Previous and next month controls
+109
+- Daily section
+110
+- Weekly section
+111
+- Monthly section
+112
+- One-time and other section
+113
+- Monthly completion percentage
+114
+- Planned completions
+115
+- Actual completions
+116
+ 
+117
+DAILY LOGIC
+118
+ 
+119
+Display one completion cell for each applicable date in the selected month.
+120
+ 
+121
+Completing an item for one day must not complete it for another day.
+122
+ 
+123
+WEEKLY LOGIC
+124
+ 
+125
+Display one completion cell for each applicable week in the selected month.
+126
+ 
+127
+Completing a weekly action applies only to that week.
+128
+ 
+129
+MONTHLY LOGIC
+130
+ 
+131
+Display one completion cell for the selected month.
+132
+ 
+133
+ONE-TIME AND OTHER LOGIC
+134
+ 
+135
+One-time and other actions stay open until completed.
+136
+ 
+137
+After completion, they should no longer appear as active recurring work but must remain available in completion history.
+138
+ 
+139
+DATA MODEL AND SECURITY
+140
+ 
+141
+Update the Supabase schema as needed.
+142
+ 
+143
+Preserve existing user data during the migration.
+144
+ 
+145
+Create a separate completion-history table rather than storing one completed boolean on a repeating action.
+146
+ 
+147
+Each completion record should identify:
+148
+- User
+149
+- Action item
+150
+- Completion period or date
+151
+- Status
+152
+- Completion timestamp
+153
+ 
+154
+Use Row Level Security so authenticated users can only access their own records.
+155
+ 
+156
+The frontend must use only the Supabase publishable key. Do not expose a service_role key or secret key in the browser.
+157
+ 
+158
+Before applying SQL changes, show me:
+159
+1. The migration SQL
+160
+2. Which existing columns and tables will change
+161
+3. How existing user data will be preserved
+162
+ 
+163
+Do not apply destructive schema changes automatically.
+164
+ 
+165
+RESPONSIVE DESIGN
+166
+ 
+167
+On desktop, use a full month grid.
+168
+ 
+169
+On mobile, use a readable day-by-day or week-by-week view without horizontal overflow.
+170
+ 
+171
+Keep the Overview dashboard working and update its calculations to use real Supabase action and completion data.

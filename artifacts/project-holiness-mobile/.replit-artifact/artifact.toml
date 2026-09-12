@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/project-holiness-mobile/"
+title = "Project Holiness Mobile"
+description = "An Expo mobile companion for Project Holiness with Supabase authentication, a dashboard, Standard Work, the Project Plan A3, and Calling Log for personal Catholic growth."
+version = "1.0.0"
+id = "artifacts/project-holiness-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/project-holiness-mobile/" ]
+localPort = 20952
+
+[services.development]
+run = "pnpm --filter @workspace/project-holiness-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/project-holiness-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/project-holiness-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "20952"
+BASE_PATH = "/project-holiness-mobile/"

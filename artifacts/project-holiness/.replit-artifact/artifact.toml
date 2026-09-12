@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Project Holiness"
+description = "A professional Christian personal operating system for improving daily life through A3 thinking, leader standard work, and a disciplined calling log."
+version = "1.0.0"
+id = "artifacts/project-holiness"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21443
+
+[services.development]
+run = "pnpm --filter @workspace/project-holiness run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/project-holiness", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/project-holiness/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21443"
+BASE_PATH = "/"

@@ -1,0 +1,8 @@
+- [Supabase-ready MVP boundary](supabase-ready-mvp.md) — optional Supabase Auth plus one RLS-protected JSON workspace keeps the first release easy to connect without blocking the preview.
+- [Supabase connector boundary](supabase-connector-boundary.md) — the attached connector does not create tables or supply browser env values; keep schema and public client config explicit.
+- [Shared Supabase environments](shared-supabase-environments.md) — preview and published Project Holiness intentionally share one Supabase project and user workspace.
+- [Supabase hydration safety](supabase-hydration-safety.md) — never enable authenticated autosave after a failed workspace load; an empty snapshot must not reconcile remote rows.
+- [Atomic workspace persistence](atomic-workspace-persistence.md) — browser tables are read-only; one revision-checked RPC owns atomic loads, saves, and explicit deletions.
+- [Structured A3 storage](structured-a3-storage.md) — linked Problems and Countermeasures use backward-compatible JSON in the existing A3 text fields, avoiding another schema migration.
+- [Catholic visual direction](catholic-visual-direction.md) — preserve the light parchment, forest green, muted gold, visible stained glass, serif, and restrained sacred-ornament character.
+- [Standard Work ordering](standard-work-ordering.md) — action order is scoped by frequency and persists through an additive sort-order field; legacy schemas must remain safe until migrated.
