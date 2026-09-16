@@ -188,30 +188,41 @@ function periodsForAction(action: ActionItem, month: string) {
   return [action.startDate < monthStart ? monthStart : action.startDate || monthStart];
 }
 
-function completionFor(completions: ActionCompletion[], actionId: string, period: string) {
-  return completions.some(completion => completion.actionItemId === actionId && completion.completionPeriod === period);
+function completionFor(completions: ActionCompletion[], actionId: string, period: string): ActionCompletion["status"] | undefined {
+  return completions.find(completion => completion.actionItemId === actionId && completion.completionPeriod === period)?.status;
 }
 
 function completionTotals(actions: ActionItem[], completions: ActionCompletion[], month: string) {
   const plannedKeys = new Set(actions.flatMap(action => periodsForAction(action, month).map(period => `${action.id}|${period}`)));
-  const actual = completions.filter(completion => plannedKeys.has(`${completion.actionItemId}|${completion.completionPeriod}`)).length;
+  const actual = completions.filter(completion => completion.status === "completed" && plannedKeys.has(`${completion.actionItemId}|${completion.completionPeriod}`)).length;
   return { planned: plannedKeys.size, actual };
 }
 
-function toggleCompletion(setStore: Dispatch<SetStateAction<Store>>, action: ActionItem, period: string) {
+// Cycles a practice through three states with each click: unmarked -> completed -> missed -> unmarked.
+function cycleCompletion(setStore: Dispatch<SetStateAction<Store>>, action: ActionItem, period: string) {
   setStore(current => {
-    const existing = current.completions.findIndex(item => item.actionItemId === action.id && item.completionPeriod === period);
-    if (existing >= 0) return { ...current, completions: current.completions.filter((_, index) => index !== existing) };
-    return {
-      ...current,
-      completions: [...current.completions, {
-        id: `completion-${action.id}-${period}`,
-        actionItemId: action.id,
-        completionPeriod: period,
-        status: "completed",
-        completedAt: new Date().toISOString(),
-      }],
-    };
+    const existingIndex = current.completions.findIndex(item => item.actionItemId === action.id && item.completionPeriod === period);
+    const existing = existingIndex >= 0 ? current.completions[existingIndex] : undefined;
+
+    if (!existing) {
+      return {
+        ...current,
+        completions: [...current.completions, {
+          id: `completion-${action.id}-${period}`,
+          actionItemId: action.id,
+          completionPeriod: period,
+          status: "completed",
+          completedAt: new Date().toISOString(),
+        }],
+      };
+    }
+    if (existing.status === "completed") {
+      return {
+        ...current,
+        completions: current.completions.map((item, index) => index === existingIndex ? { ...item, status: "missed", completedAt: new Date().toISOString() } : item),
+      };
+    }
+    return { ...current, completions: current.completions.filter((_, index) => index !== existingIndex) };
   });
 }
 
@@ -681,7 +692,7 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
 
   const toggleCalendarCompletion = (action: ActionItem, period: string) => {
     rememberCalendarScroll();
-    toggleCompletion(setStore, action, period);
+    cycleCompletion(setStore, action, period);
   };
 
   const reorderWithinFrequency = (sourceId: string, targetId: string) => {
@@ -758,7 +769,8 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
         {sorted.length === 0 ? <p className="rounded-2xl border border-dashed border-[#DDD2C0] bg-[#F5F1E9] px-5 py-6 text-sm text-[#827264]">No active {title.toLowerCase()}.</p> : (
           <div className="space-y-2">
             {sorted.map(action => {
-              const completed = hasAnyCompletion(action, store.completions);
+              const period = action.dueDate || action.startDate || today;
+              const status = completionFor(store.completions, action.id, period);
               return (
                 <div
                   key={action.id}
@@ -771,25 +783,22 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
                 >
                   <GripVertical size={17} className="shrink-0 cursor-grab text-[#A79682]" />
                   <button
-                    onClick={() => {
-                      const existing = store.completions.find(item => item.actionItemId === action.id);
-                      if (existing) setStore(current => ({ ...current, completions: current.completions.filter(item => item.id !== existing.id) }));
-                      else toggleCompletion(setStore, action, action.dueDate || action.startDate || today);
-                    }}
-                    aria-label={`${completed ? "Mark incomplete" : "Complete"} ${action.title}`}
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-all ${completed ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]" : "border-[#CDBD9D] bg-white text-transparent hover:border-[#827264]"}`}
+                    onClick={() => cycleCompletion(setStore, action, period)}
+                    aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Clear status for" : "Mark complete"} ${action.title}`}
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0]" : "border-[#CDBD9D] bg-white text-transparent hover:border-[#827264]"}`}
                   >
-                    <Check size={14} strokeWidth={3} />
+                    {status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}
                   </button>
                   <div className="min-w-0 flex-1">
-                    <p className={`font-medium text-[#31231E] ${completed ? "line-through opacity-55" : ""}`}>{action.title}</p>
+                    <p className={`font-medium text-[#31231E] ${status === "completed" ? "line-through opacity-55" : ""}`}>{action.title}</p>
                     {(action.dueDate || action.description) && <p className="mt-1 text-xs text-[#827264]">{action.dueDate ? `Due ${shortDate(action.dueDate)}` : action.description}</p>}
                   </div>
                   <div className="flex shrink-0 md:hidden">
                     <button type="button" onClick={() => moveAction(action, -1)} className="rounded-md p-1 text-[#827264] hover:bg-black/5 hover:text-[#31231E]" aria-label={`Move ${action.title} up`}><ChevronUp size={16} /></button>
                     <button type="button" onClick={() => moveAction(action, 1)} className="rounded-md p-1 text-[#827264] hover:bg-black/5 hover:text-[#31231E]" aria-label={`Move ${action.title} down`}><ChevronDown size={16} /></button>
                   </div>
-                  {completed && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#426553]">Completed</span>}
+                  {status === "completed" && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#426553]">Completed</span>}
+                  {status === "missed" && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#DF3B32]">Missed</span>}
                 </div>
               );
             })}
@@ -801,6 +810,16 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
 
   return <>
     <PageHeader eyebrow="Practices" title="The daily field." description="A generated view of your commitments based on your Formation Plan." action={<div className="flex items-center justify-between gap-4 rounded-xl border border-[#DDD2C0] bg-white/70 p-1.5 shadow-sm"><Button variant="ghost" onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft size={16} /></Button><span className="min-w-[120px] text-center font-mono text-[11px] font-bold uppercase tracking-widest text-[#5C4D43]">{monthLabel(month)}</span><Button variant="ghost" onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight size={16} /></Button></div>} />
+    <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border border-[#DDD2C0] bg-white/60 px-4 py-3 text-xs text-[#5C4D43] backdrop-blur">
+      <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#8C6D23]">How to mark a practice</span>
+      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#DDD2C0] bg-[#F5F1E9]" /> Click once for not marked</span>
+      <ArrowRight size={12} className="text-[#827264]" />
+      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]"><Check size={12} strokeWidth={3} /></span> Done</span>
+      <ArrowRight size={12} className="text-[#827264]" />
+      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0]"><X size={12} strokeWidth={3} /></span> Missed</span>
+      <ArrowRight size={12} className="text-[#827264]" />
+      <span>back to not marked</span>
+    </div>
     <div className="mb-6 flex flex-wrap items-center gap-6">
       <div className="flex items-center gap-2"><span className="font-serif text-3xl font-bold text-[#31231E]">{completion}%</span><span className="text-xs font-medium text-[#827264]">completion</span></div>
       <div className="flex items-center gap-2"><span className="font-serif text-3xl font-bold text-[#31231E]">{planned}</span><span className="text-xs font-medium text-[#827264]">planned events</span></div>
@@ -824,20 +843,20 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
             <tr className="bg-black/5"><td colSpan={dates.length + 1} className="px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Daily</td></tr>
             {actions.filter(action => action.frequency === "daily").map(action => <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}{dates.map(date => {
               const isPlanned = periodsForAction(action, month).includes(date);
-              const isCompleted = completionFor(store.completions, action.id, date);
-              return <td key={date} className="px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, date)} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all ${isCompleted ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm check-pop" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}><Check size={14} strokeWidth={3} /></button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-[#DDD2C0]" />}</td>;
+              const status = completionFor(store.completions, action.id, date);
+              return <td key={date} className="px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, date)} aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Clear status for" : "Mark complete"} ${action.title} on ${shortDate(date)}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-[#DDD2C0]" />}</td>;
             })}</tr>)}
             <tr className="bg-black/5"><td colSpan={dates.length + 1} className="px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Weekly · one check per calendar week</td></tr>
             {actions.filter(action => action.frequency === "weekly").map(action => <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}{weekGroups.map(week => {
               const isPlanned = periodsForAction(action, month).includes(week.start);
-              const isCompleted = completionFor(store.completions, action.id, week.start);
-              return <td key={week.start} colSpan={week.dates.length} className="border-l border-[#DDD2C0] px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, week.start)} aria-label={`Mark ${action.title} complete for the week of ${shortDate(week.dates[0])}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all ${isCompleted ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm check-pop" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}><Check size={14} strokeWidth={3} /></button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-transparent" />}</td>;
+              const status = completionFor(store.completions, action.id, week.start);
+              return <td key={week.start} colSpan={week.dates.length} className="border-l border-[#DDD2C0] px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, week.start)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Clear status for" : "Mark complete for"} ${action.title} for the week of ${shortDate(week.dates[0])}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-transparent" />}</td>;
             })}</tr>)}
             <tr className="bg-black/5"><td colSpan={dates.length + 1} className="px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Monthly · one check for the month</td></tr>
             {actions.filter(action => action.frequency === "monthly").map(action => {
               const period = periodsForAction(action, month)[0];
-              const isCompleted = period ? completionFor(store.completions, action.id, period) : false;
-              return <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}<td colSpan={dates.length} className="border-l border-[#DDD2C0] px-3 py-3 text-center">{period ? <button onClick={() => toggleCalendarCompletion(action, period)} aria-label={`Mark ${action.title} complete for ${monthLabel(month)}`} className={`mx-auto grid h-8 w-8 place-items-center rounded-lg border transition-all ${isCompleted ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm check-pop" : "border-[#CDBD9D] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}><Check size={15} strokeWidth={3} /></button> : <span className="text-xs text-[#827264]">Not active this month</span>}</td></tr>;
+              const status = period ? completionFor(store.completions, action.id, period) : undefined;
+              return <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}<td colSpan={dates.length} className="border-l border-[#DDD2C0] px-3 py-3 text-center">{period ? <button onClick={() => toggleCalendarCompletion(action, period)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Clear status for" : "Mark complete for"} ${action.title} for ${monthLabel(month)}`} className={`mx-auto grid h-8 w-8 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#CDBD9D] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={15} strokeWidth={3} /> : <Check size={15} strokeWidth={3} />}</button> : <span className="text-xs text-[#827264]">Not active this month</span>}</td></tr>;
             })}
           </tbody>
         </table>

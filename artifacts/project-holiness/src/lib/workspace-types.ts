@@ -31,7 +31,7 @@ export type ActionCompletion = {
   id: string;
   actionItemId: string;
   completionPeriod: string;
-  status: "completed";
+  status: "completed" | "missed";
   completedAt: string;
 };
 
