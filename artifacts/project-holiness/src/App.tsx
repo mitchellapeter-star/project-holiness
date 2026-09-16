@@ -192,6 +192,18 @@ function completionFor(completions: ActionCompletion[], actionId: string, period
   return completions.find(completion => completion.actionItemId === actionId && completion.completionPeriod === period)?.status;
 }
 
+// Derives a display status for an action item instead of relying on a manually set field.
+// Recurring items (daily/weekly/monthly) are tracked ongoing in Practices, so they read "In practice."
+// One-time/other items reflect their single completion record: Open, Complete, or Missed.
+function derivedActionStatus(action: ActionItem, completions: ActionCompletion[]): { label: string; tone: "green" | "gold" | "neutral" | "red" } {
+  if (isRecurring(action)) return { label: "In practice", tone: "gold" };
+  const period = action.dueDate || action.startDate || today;
+  const status = completionFor(completions, action.id, period);
+  if (status === "completed") return { label: "Complete", tone: "green" };
+  if (status === "missed") return { label: "Missed", tone: "red" };
+  return { label: "Open", tone: "neutral" };
+}
+
 function completionTotals(actions: ActionItem[], completions: ActionCompletion[], month: string) {
   const plannedKeys = new Set(actions.flatMap(action => periodsForAction(action, month).map(period => `${action.id}|${period}`)));
   const actual = completions.filter(completion => completion.status === "completed" && plannedKeys.has(`${completion.actionItemId}|${completion.completionPeriod}`)).length;
@@ -336,17 +348,37 @@ function GuidePage() {
       <PageHeader
         eyebrow="Formation Guide"
         title="The Project Holiness Method"
-        description="Understanding the framework for intentional spiritual growth. Read this to orient your practice."
+        description="Background, why, and how to use this website. Read this to orient your practice."
       />
       <div className="w-full space-y-12">
         <section className="rounded-3xl border border-[#CDBD9D] bg-gradient-to-br from-[#EBE3D0] via-[#F5F1E9] to-white/70 p-6 shadow-md md:p-10">
-          <div className="mb-7 max-w-3xl">
-            <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Before step 1</p>
-            <h2 className="font-serif text-2xl font-bold text-[#31231E]">What is a Formation Plan?</h2>
-            <p className="mt-3 leading-relaxed text-[#5C4D43]">
-              A Formation Plan is a one-page thinking process. It moves from purpose, through honest diagnosis, into concrete action and a repeatable rule of life.
-            </p>
+          <div className="space-y-9">
+            <div>
+              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Background</p>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A one-page method borrowed from problem-solving</h2>
+              <p className="leading-relaxed text-[#5C4D43]">
+                This site is modeled after a common and effective engineering problem-solving approach called an <strong>A3</strong>. An A3 is meant to be a one-page layout and guide for solving a problem, and your <strong>Formation Plan</strong> is structured the same way: purpose, honest diagnosis, and concrete action, all on a single page you return to again and again.
+              </p>
+            </div>
+            <div>
+              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Why</p>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A place to start a project focused on becoming holy</h2>
+              <p className="leading-relaxed text-[#5C4D43]">
+                This website is meant to be a place for you to start a project focused on becoming holy. It helps you assess yourself and see what leads you short of holiness. Then it asks you to come up with ideas to combat these issues, and ultimately to put them into practice through action items, which show up on your <strong>Practices</strong> page. Every idea and action you come up with is tracked on your Formation Plan, so you can keep track and hold yourself accountable to complete it.
+              </p>
+            </div>
+            <div>
+              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">How</p>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">Three steps, all on one page</h2>
+              <p className="leading-relaxed text-[#5C4D43]">
+                Your Formation Plan has three parts, each detailed further below: <strong>I. Foundation</strong> (the Project Statement and Life Rationale) are fixed, because that is the purpose of this website and because we all fall short of holiness. <strong>II. Assessment & Strategy</strong> asks you to assess yourself, name the problems that hold you back from becoming holy, think through their root causes, and brainstorm countermeasures to combat them. <strong>III. Execution</strong> is where those countermeasures become actual action items you can do, daily, weekly, monthly, one time, or other, and which show up in your Practices tab.
+              </p>
+            </div>
           </div>
+        </section>
+
+        <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-6 shadow-sm backdrop-blur md:p-8">
+          <p className="mb-5 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">At a glance</p>
           <div className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:gap-1.5" aria-label="Formation Plan process flow">
             {a3Flow.map((step, index) => (
               <div key={step.label} className="contents">
@@ -370,63 +402,67 @@ function GuidePage() {
             <Compass size={120} strokeWidth={0.5} className="text-[#2D4C3C]" />
           </div>
           <div className="relative z-10">
-            <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">1. The Fixed Foundation</h2>
-            <p className="text-[#5C4D43] leading-relaxed mb-6">
+            <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">I. Foundation</h2>
+            <p className="text-[#5C4D43] leading-relaxed">
               Every Formation Plan begins with the same unchanging reality: the universal call to holiness. We do not invent our own purpose; we receive it. The <strong>Project Statement</strong> and <strong>Life Rationale</strong> are fixed to remind us that holiness means being set apart for God and conforming our will to His. If you are married, this call extends explicitly to the sanctification of your spouse and children.
             </p>
           </div>
         </section>
 
         <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-8 md:p-10 shadow-sm backdrop-blur">
-          <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">2. Problem & Root Cause</h2>
+          <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">II. Assessment & Strategy</h2>
           <p className="text-[#5C4D43] leading-relaxed mb-6">
-            Growth requires honest assessment. A problem is the gap between the holiness you are called to and your current reality. But fixing the symptom isn't enough; you must identify the root cause.
+            Growth requires honest assessment. A <strong>problem</strong> is the gap between the holiness you are called to and your current reality. But fixing the symptom isn't enough, so name the <strong>root cause</strong> beneath it. Once you understand the root cause, brainstorm <strong>countermeasures</strong>: strategies, rules, or environmental changes that make the right behavior easier and the wrong behavior harder.
           </p>
-          <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6 mb-2">
-            <h3 className="font-bold text-[#2D4C3C] mb-2 text-sm flex items-center gap-2"><AlertCircle size={16}/> Example Assessment</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Problem</p>
-                <p className="text-sm text-[#5C4D43] leading-relaxed">I spend 2+ hours mindlessly scrolling on my phone every evening instead of praying, reading, or being present to my family.</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6">
+              <h3 className="font-bold text-[#2D4C3C] mb-3 text-sm flex items-center gap-2"><AlertCircle size={16}/> Example: Problem & Root Cause</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Problem</p>
+                  <p className="text-sm text-[#5C4D43] leading-relaxed">I spend 2+ hours mindlessly scrolling on my phone every evening instead of praying, reading, or being present to my family.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Root Cause</p>
+                  <p className="text-sm text-[#5C4D43] leading-relaxed">I am exhausted by the end of the day and seek numbing comfort rather than restorative rest. I keep the device in my pocket where it is frictionless to access.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Root Cause</p>
-                <p className="text-sm text-[#5C4D43] leading-relaxed">I am exhausted by the end of the day and seek numbing comfort rather than restorative rest. I keep the device in my pocket where it is frictionless to access.</p>
-              </div>
+            </div>
+            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6">
+              <h3 className="font-bold text-[#2D4C3C] mb-3 text-sm flex items-center gap-2"><Target size={16}/> Example Countermeasures</h3>
+              <ul className="list-disc list-inside text-sm text-[#5C4D43] leading-relaxed space-y-2 ml-2">
+                <li>Institute a "no phones in the bedroom or living room after 8 PM" rule.</li>
+                <li>Set up a charging station in the kitchen.</li>
+                <li>Place a spiritual reading book on the nightstand to replace the device.</li>
+              </ul>
             </div>
           </div>
         </section>
 
         <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-8 md:p-10 shadow-sm backdrop-blur">
-          <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">3. Countermeasures</h2>
+          <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">III. Execution</h2>
           <p className="text-[#5C4D43] leading-relaxed mb-6">
-            Countermeasures attack the root cause directly. They are strategies, rules, or environmental changes that make the right behavior easier and the wrong behavior harder.
+            Countermeasures are theoretical until they become <strong>action items</strong>: specific, scheduled tasks or recurring habits. Choose a frequency for each one, daily, weekly, monthly, one time, or other, and it will show up in your <strong>Practices</strong> tab. Each action item's status is tracked for you rather than set by hand. Daily, weekly, and monthly items read <strong>In practice</strong>, since they're ongoing and tracked there. One-time and other items read <strong>Open</strong> until you check them off in Practices, then <strong>Complete</strong> or <strong>Missed</strong>, depending on how you marked them.
           </p>
-          <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6 mb-2">
-            <h3 className="font-bold text-[#2D4C3C] mb-2 text-sm flex items-center gap-2"><Target size={16}/> Example Countermeasures</h3>
-            <ul className="list-disc list-inside text-sm text-[#5C4D43] leading-relaxed space-y-2 ml-2">
-              <li>Institute a "no phones in the bedroom or living room after 8 PM" rule.</li>
-              <li>Set up a charging station in the kitchen.</li>
-              <li>Place a spiritual reading book on the nightstand to replace the device.</li>
-            </ul>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">Example: One-time Action</p>
+              <p className="text-sm text-[#5C4D43] font-medium mb-2">Buy an alarm clock for the bedroom.</p>
+              <p className="text-xs text-[#827264]">Shows as <strong>Open</strong> in your Formation Plan until you mark it Complete or Missed in Practices.</p>
+            </div>
+            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">Example: Daily Action</p>
+              <p className="text-sm text-[#5C4D43] font-medium mb-2">Plug phone into kitchen charger at 8 PM.</p>
+              <p className="text-xs text-[#827264]">Shows as <strong>In practice</strong>, and each day's check-in happens in your Practices tab.</p>
+            </div>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-8 md:p-10 shadow-sm backdrop-blur">
-          <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">4. Action Items & Practices</h2>
-          <p className="text-[#5C4D43] leading-relaxed mb-6">
-            Countermeasures are theoretical until they become Action Items. Action Items are specific, scheduled tasks or recurring habits. Recurring action items automatically populate your <strong>Practices</strong> grid, allowing you to track your daily, weekly, and monthly faithfulness.
+        <section className="rounded-3xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-8 md:p-10 shadow-xl text-[#F5F1E9]">
+          <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#D4AF37]">An ongoing project</p>
+          <p className="leading-relaxed text-[#D2E0D9]">
+            Continue to keep assessing yourself as time goes by, and come up with new problems as old ones are resolved. Add new action items and delete old ones, so your plan stays effective against your current problems. Keep yourself accountable with the Practices tab, and soon enough you will start closing the gap to holiness.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
-              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">One-time Action</p>
-              <p className="text-sm text-[#5C4D43] font-medium">Buy an alarm clock for the bedroom.</p>
-            </div>
-            <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
-              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">Daily Action</p>
-              <p className="text-sm text-[#5C4D43] font-medium">Plug phone into kitchen charger at 8 PM.</p>
-            </div>
-          </div>
         </section>
 
         <section className="rounded-3xl border border-[#DDD2C0] bg-[#EBE3D0] p-8 md:p-10 shadow-xl text-[#31231E] relative overflow-hidden">
@@ -434,7 +470,7 @@ function GuidePage() {
             <BookOpen size={120} strokeWidth={0.5} className="text-[#2D4C3C]" />
           </div>
           <div className="relative z-10">
-            <h2 className="font-serif text-2xl font-bold mb-4 text-[#8C6D23]">5. The Calling Log</h2>
+            <h2 className="font-serif text-2xl font-bold mb-4 text-[#8C6D23]">Also on this site: The Calling Log</h2>
             <p className="text-[#5C4D43] leading-relaxed mb-6">
               The Calling Log is a separate tool for prayerful discernment. Throughout life, you will perceive calls from God—nudges toward a vocation, a change in career, a specific apostolate, or a deep spiritual shift.
             </p>
@@ -458,7 +494,7 @@ function Field({ label, value, onChange, type = "text", placeholder, area = fals
 
 function ActionForm({ value, onChange, onSubmit, onCancel, editing }: { value: Omit<ActionItem, "id">; onChange: Dispatch<SetStateAction<Omit<ActionItem, "id">>>; onSubmit: (event: FormEvent) => void; onCancel: () => void; editing: boolean }) {
   const update = (key: keyof Omit<ActionItem, "id">, next: string | boolean) => onChange(current => ({ ...current, [key]: next }));
-  return <form onSubmit={onSubmit} className="mt-5 rounded-3xl border border-[#DDD2C0] bg-gradient-to-br from-[#EBE3D0] to-[#F5F1E9] p-6 md:p-8 shadow-md"><div className="grid gap-5 md:grid-cols-2"><Field label="Title" value={value.title} onChange={next => update("title", next)} placeholder="Name the faithful action" testId="input-action-title" /><Field label="Start date" type="date" value={value.startDate} onChange={next => update("startDate", next)} testId="input-action-start-date" /><div className="md:col-span-2"><Field label="Description or notes" value={value.description} onChange={next => update("description", next)} area placeholder="What will this practice look like?" testId="textarea-action-description" /></div><div><label className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Frequency</label><select value={value.frequency} onChange={event => update("frequency", event.target.value)} className="w-full rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm font-medium text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] shadow-sm transition-all"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="one-time">One time</option><option value="other">Other</option></select></div><div><label className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Completion status</label><select value={value.status} onChange={event => update("status", event.target.value)} className="w-full rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm font-medium text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] shadow-sm transition-all"><option value="open">Open</option><option value="in-progress">In progress</option><option value="done">Complete</option></select></div><Field label="Due date (optional)" type="date" value={value.dueDate} onChange={next => update("dueDate", next)} testId="input-action-due-date" /><Field label="End date (optional)" type="date" value={value.endDate} onChange={next => update("endDate", next)} testId="input-action-end-date" /><div className="md:col-span-2 pt-2"><label className="flex items-center gap-3 rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm font-bold text-[#31231E] shadow-sm cursor-pointer hover:bg-black/5 transition-colors"><input type="checkbox" checked={value.active} onChange={event => update("active", event.target.checked)} className="h-4 w-4 rounded border-[#DDD2C0] text-[#2D4C3C] focus:ring-[#2D4C3C]" /> Active action (appears in Practices)</label></div></div><div className="mt-8 flex justify-end gap-3"><Button variant="quiet" onClick={onCancel}>Cancel</Button><Button type="submit">{editing ? "Save action" : "Add action"}</Button></div></form>;
+  return <form onSubmit={onSubmit} className="mt-5 rounded-3xl border border-[#DDD2C0] bg-gradient-to-br from-[#EBE3D0] to-[#F5F1E9] p-6 md:p-8 shadow-md"><div className="grid gap-5 md:grid-cols-2"><Field label="Title" value={value.title} onChange={next => update("title", next)} placeholder="Name the faithful action" testId="input-action-title" /><Field label="Start date" type="date" value={value.startDate} onChange={next => update("startDate", next)} testId="input-action-start-date" /><div className="md:col-span-2"><Field label="Description or notes" value={value.description} onChange={next => update("description", next)} area placeholder="What will this practice look like?" testId="textarea-action-description" /></div><div><label className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Frequency</label><select value={value.frequency} onChange={event => update("frequency", event.target.value)} className="w-full rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm font-medium text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] shadow-sm transition-all"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="one-time">One time</option><option value="other">Other</option></select></div><Field label="Due date (optional)" type="date" value={value.dueDate} onChange={next => update("dueDate", next)} testId="input-action-due-date" /><Field label="End date (optional)" type="date" value={value.endDate} onChange={next => update("endDate", next)} testId="input-action-end-date" /><div className="md:col-span-2 pt-2"><label className="flex items-center gap-3 rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm font-bold text-[#31231E] shadow-sm cursor-pointer hover:bg-black/5 transition-colors"><input type="checkbox" checked={value.active} onChange={event => update("active", event.target.checked)} className="h-4 w-4 rounded border-[#DDD2C0] text-[#2D4C3C] focus:ring-[#2D4C3C]" /> Active action (appears in Practices)</label></div></div><div className="mt-8 flex justify-end gap-3"><Button variant="quiet" onClick={onCancel}>Cancel</Button><Button type="submit">{editing ? "Save action" : "Add action"}</Button></div></form>;
 }
 
 function A3Page({ store, setStore }: { store: Store; setStore: Dispatch<SetStateAction<Store>> }) {
@@ -655,7 +691,7 @@ function A3Page({ store, setStore }: { store: Store; setStore: Dispatch<SetState
             <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><CalendarDays size={13} className="text-[#8C6D23]" /> Starts {shortDate(action.startDate)}</p>
             <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><History size={13} className="text-[#8C6D23]" /> {frequencyLabels[action.frequency]}</p>
           </div>
-        </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4"><Pill tone={action.status === "done" ? "green" : action.status === "in-progress" ? "gold" : "neutral"}>{action.status === "done" ? "Complete" : action.status === "in-progress" ? "In progress" : "Open"}</Pill><div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
+        </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4">{(() => { const derived = derivedActionStatus(action, store.completions); return <Pill tone={derived.tone}>{derived.label}</Pill>; })()}<div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
       </section>
     </div>
   </>;
