@@ -2,10 +2,19 @@
 
 /* --- At a glance: each Roman-numeral section visibly owns its steps. --- */
 [aria-label="Formation Plan process flow"] { display:grid !important; grid-template-columns:minmax(0,2fr) minmax(0,3fr) minmax(0,2fr); gap:1.25rem !important; align-items:start; }
-[aria-label="Formation Plan process flow"] > div { position:relative; min-width:0; padding:1rem; border:1px solid rgba(139,109,35,.18); border-radius:1.25rem; background:rgba(255,255,255,.34); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
-[aria-label="Formation Plan process flow"] > div > div:first-child { display:flex; width:100%; justify-content:center; margin-bottom:.85rem; padding:.55rem .8rem; border-radius:.8rem; border-color:rgba(139,109,35,.35); background:rgba(235,227,208,.8); box-shadow:0 1px 2px rgba(49,35,30,.05); }
+[aria-label="Formation Plan process flow"] > div { position:relative; min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; padding:1rem; border:1px solid rgba(139,109,35,.18); border-radius:1.25rem; background:rgba(255,255,255,.34); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+[aria-label="Formation Plan process flow"] > div > div:first-child { display:flex; width:100%; justify-content:center; margin-bottom:.85rem; padding:.55rem .8rem; border-radius:.8rem; border-color:rgba(139,109,35,.35); background:rgba(235,227,208,.8); box-shadow:0 1px 2px rgba(49,35,30,.05); box-sizing:border-box; }
 [aria-label="Formation Plan process flow"] > div > div:first-child span { font-size:11px; letter-spacing:.16em; }
-[aria-label="Formation Plan process flow"] > div > div:nth-child(2), [aria-label="Formation Plan process flow"] > div > div:nth-child(2) > div { min-width:0; }
+[aria-label="Formation Plan process flow"] > div > div:nth-child(2) { min-width:0; max-width:100%; width:100%; box-sizing:border-box; overflow:hidden; }
+[aria-label="Formation Plan process flow"] > div > div:nth-child(2) > div { min-width:0; max-width:100%; box-sizing:border-box; }
+[aria-label="Formation Plan process flow"] > div > div:nth-child(2) > div > * { min-width:0; max-width:100%; box-sizing:border-box; }
+
+/* Keep the three countermeasure cards contained inside Section II. */
+[aria-label="Formation Plan process flow"] > div:nth-child(2) { overflow:hidden; }
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"],
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] { min-width:0; max-width:100%; box-sizing:border-box; }
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"] > *,
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] > * { min-width:0; max-width:100%; box-sizing:border-box; }
 
 /* Clean section-to-section connectors. */
 @media (min-width:1024px) {
@@ -64,6 +73,28 @@ html[data-ph-theme] h1, html[data-ph-theme] h2, html[data-ph-theme] h3, html[dat
 html[data-ph-theme] .text-gray-400, html[data-ph-theme] .text-gray-500, html[data-ph-theme] .text-slate-400, html[data-ph-theme] .text-slate-500, html[data-ph-theme] .text-zinc-400, html[data-ph-theme] .text-zinc-500 { color:var(--ph-text-soft) !important; }
 html[data-ph-theme] .tracking-widest, html[data-ph-theme] .uppercase { color:var(--ph-text-soft) !important; }
 html[data-ph-theme="dark"] .tracking-widest, html[data-ph-theme="dark"] .uppercase { color:#ded7cc !important; }
+
+/* Dark blocks from the original design stay dark in the pastel themes. */
+html[data-ph-theme="sage"] { --ph-dark-panel:#304d3b; --ph-dark-panel-text:#f4f7f2; }
+html[data-ph-theme="blush"] { --ph-dark-panel:#603b46; --ph-dark-panel-text:#fff6f8; }
+html[data-ph-theme="sky"] { --ph-dark-panel:#355766; --ph-dark-panel-text:#f3f8fa; }
+html[data-ph-theme="lavender"] { --ph-dark-panel:#4c405e; --ph-dark-panel-text:#f7f3fb; }
+html[data-ph-theme="butter"] { --ph-dark-panel:#5b5132; --ph-dark-panel-text:#fffaf0; }
+html[data-ph-theme="sage"] .bg-\[\#31231E\], html[data-ph-theme="sage"] .bg-\[\#2D4C3C\],
+html[data-ph-theme="blush"] .bg-\[\#31231E\], html[data-ph-theme="blush"] .bg-\[\#2D4C3C\"],
+html[data-ph-theme="sky"] .bg-\[\#31231E\], html[data-ph-theme="sky"] .bg-\[\#2D4C3C\],
+html[data-ph-theme="lavender"] .bg-\[\#31231E\], html[data-ph-theme="lavender"] .bg-\[\#2D4C3C\],
+html[data-ph-theme="butter"] .bg-\[\#31231E\], html[data-ph-theme="butter"] .bg-\[\#2D4C3C\] { background-color:var(--ph-dark-panel) !important; }
+html[data-ph-theme="sage"] [class*="bg-gray-8"], html[data-ph-theme="sage"] [class*="bg-gray-9"], html[data-ph-theme="sage"] [class*="bg-slate-8"], html[data-ph-theme="sage"] [class*="bg-slate-9"], html[data-ph-theme="sage"] [class*="bg-zinc-8"], html[data-ph-theme="sage"] [class*="bg-zinc-9"],
+html[data-ph-theme="blush"] [class*="bg-gray-8"], html[data-ph-theme="blush"] [class*="bg-gray-9"], html[data-ph-theme="blush"] [class*="bg-slate-8"], html[data-ph-theme="blush"] [class*="bg-slate-9"], html[data-ph-theme="blush"] [class*="bg-zinc-8"], html[data-ph-theme="blush"] [class*="bg-zinc-9"],
+html[data-ph-theme="sky"] [class*="bg-gray-8"], html[data-ph-theme="sky"] [class*="bg-gray-9"], html[data-ph-theme="sky"] [class*="bg-slate-8"], html[data-ph-theme="sky"] [class*="bg-slate-9"], html[data-ph-theme="sky"] [class*="bg-zinc-8"], html[data-ph-theme="sky"] [class*="bg-zinc-9"],
+html[data-ph-theme="lavender"] [class*="bg-gray-8"], html[data-ph-theme="lavender"] [class*="bg-gray-9"], html[data-ph-theme="lavender"] [class*="bg-slate-8"], html[data-ph-theme="lavender"] [class*="bg-slate-9"], html[data-ph-theme="lavender"] [class*="bg-zinc-8"], html[data-ph-theme="lavender"] [class*="bg-zinc-9"],
+html[data-ph-theme="butter"] [class*="bg-gray-8"], html[data-ph-theme="butter"] [class*="bg-gray-9"], html[data-ph-theme="butter"] [class*="bg-slate-8"], html[data-ph-theme="butter"] [class*="bg-slate-9"], html[data-ph-theme="butter"] [class*="bg-zinc-8"], html[data-ph-theme="butter"] [class*="bg-zinc-9"] { background-color:var(--ph-dark-panel) !important; }
+html[data-ph-theme="sage"] .bg-\[\#31231E\] *, html[data-ph-theme="sage"] .bg-\[\#2D4C3C\] *,
+html[data-ph-theme="blush"] .bg-\[\#31231E\] *, html[data-ph-theme="blush"] .bg-\[\#2D4C3C\] *,
+html[data-ph-theme="sky"] .bg-\[\#31231E\] *, html[data-ph-theme="sky"] .bg-\[\#2D4C3C\] *,
+html[data-ph-theme="lavender"] .bg-\[\#31231E\] *, html[data-ph-theme="lavender"] .bg-\[\#2D4C3C\] *,
+html[data-ph-theme="butter"] .bg-\[\#31231E\] *, html[data-ph-theme="butter"] .bg-\[\#2D4C3C\] * { color:var(--ph-dark-panel-text) !important; }
 
 /* Dark stained-glass page headers: dark overlay + light type. */
 html[data-ph-theme="dark"] .bg-\[\#F5F1E9\] .mix-blend-multiply { opacity:.22 !important; }
