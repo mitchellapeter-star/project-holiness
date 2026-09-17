@@ -15,8 +15,17 @@
 
   function applyTheme(theme, dark) {
     const safeTheme = THEMES[theme] ? theme : 'classic';
-    document.documentElement.dataset.phTheme = dark ? 'dark' : safeTheme;
+    const activeTheme = dark ? 'dark' : safeTheme;
+
+    /* Classic is the untouched default. Do not add the theme attribute unless
+       the user actually selected a non-default appearance or dark mode. */
+    if (!dark && safeTheme === 'classic') {
+      delete document.documentElement.dataset.phTheme;
+    } else {
+      document.documentElement.dataset.phTheme = activeTheme;
+    }
     document.documentElement.classList.toggle('dark', !!dark);
+
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: safeTheme, dark: !!dark })); } catch {}
     window.dispatchEvent(new CustomEvent('project-holiness-theme-change', { detail: { theme: safeTheme, dark: !!dark } }));
   }
@@ -39,7 +48,9 @@
     }
     if (document.getElementById('ph-appearance')) return;
 
-    const heading = Array.from(document.querySelectorAll('h3')).find(el => el.textContent?.trim() === 'Coming soon');
+    /* SettingsPage currently uses “Coming soon…”; use includes so the
+       punctuation does not prevent the appearance panel from mounting. */
+    const heading = Array.from(document.querySelectorAll('h3')).find(el => el.textContent?.trim().startsWith('Coming soon'));
     const placeholder = heading?.closest('div.rounded-3xl');
     if (!placeholder) return;
 
