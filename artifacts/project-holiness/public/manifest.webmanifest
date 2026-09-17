@@ -1,0 +1,13 @@
+{
+  "name": "Project Holiness",
+  "short_name": "Holiness",
+  "description": "A practical rule of life for closing the gap to holiness.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F1E9",
+  "theme_color": "#2D4C3C",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

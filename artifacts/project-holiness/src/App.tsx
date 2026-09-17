@@ -34,6 +34,18 @@ const avatarOptions = [
 function avatarFor(key: string | null | undefined) {
   return avatarOptions.find(option => option.key === key);
 }
+
+// Public half of this project's VAPID keypair, used when subscribing a browser to push
+// notifications. Must match the key the daily-reminders-v2 Supabase Edge Function signs with.
+const VAPID_PUBLIC_KEY = "BPZIvPevNJljIOdQT3yoWr6trebbJ9dgl68MhGoZ_5_6nOlnnvWYX78R8UE6a420JMX5Ay0k9r7aj0tkWOQfmPY";
+const REMINDER_MESSAGE = "Take a few minutes to record the practices you have completed";
+function base64UrlToUint8Array(value: string) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (value.length % 4)) % 4);
+  const raw = atob(padded);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
 const fixedProjectStatement = "There is a gap between where I am and the holiness I'm called to. Holiness means being set apart for God, growing toward sainthood, and conforming my will to His, the universal call every baptized person shares.\n\nIf married, this call extends to one's marriage as well, since spouses are meant to help sanctify one another.";
 const fixedLifeRationale = "Becoming holy leads to heaven, leaves a lasting effect on ourselves and those who come after us, and greatly improves our lives and the lives of those around us. Growth in holiness is growth in love, of God and neighbor, and it bears fruit far beyond ourselves.\n\nIf married, this includes a holy marriage, which shapes not only the spouses but their children as well.";
 
@@ -452,7 +464,129 @@ function ResetPasswordPage({ onDone }: { onDone: () => void }) {
 }
 
 function SettingsPage() {
-  return <><PageHeader eyebrow="Account" title="Settings" description="Manage your account preferences." /><div className="rounded-3xl border border-dashed border-[#DDD2C0] bg-white/40 py-16 px-6 text-center shadow-sm"><div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-[#EBE3D0] text-[#5C4D43]"><Settings size={26} strokeWidth={1.5} /></div><h3 className="font-serif text-xl font-bold text-[#31231E]">Coming soon…</h3><p className="mt-2 text-sm text-[#827264] max-w-sm mx-auto leading-relaxed">Account settings are on the way. For now, use the profile menu to sign out or reset your password from the sign-in screen.</p></div></>;
+  const [loading, setLoading] = useState(true);
+  const [enabled, setEnabled] = useState(false);
+  const [time, setTime] = useState("20:00");
+  const [channel, setChannel] = useState<"push" | "email">("push");
+  const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!supabase) { setLoading(false); return; }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !active) { setLoading(false); return; }
+      const { data } = await supabase.from("holiness_reminders").select("enabled,channel,time_of_day,timezone").eq("user_id", user.id).maybeSingle();
+      if (!active) return;
+      if (data) {
+        setEnabled(!!data.enabled);
+        setChannel(data.channel === "email" ? "email" : "push");
+        setTime(String(data.time_of_day || "20:00").slice(0, 5));
+        if (data.timezone) setTimezone(data.timezone);
+      }
+      setLoading(false);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setStatus(null);
+    if (!supabase) { setStatus({ text: "Supabase is not configured here.", tone: "error" }); setSaving(false); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setStatus({ text: "You need to be signed in to save this.", tone: "error" }); setSaving(false); return; }
+
+    if (enabled && channel === "push") {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setStatus({ text: "Push notifications are not supported by this browser.", tone: "error" });
+        setSaving(false);
+        return;
+      }
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          setStatus({ text: "Notification permission was not granted.", tone: "error" });
+          setSaving(false);
+          return;
+        }
+        const registration = await navigator.serviceWorker.register("/reminder-sw.js");
+        await navigator.serviceWorker.ready;
+        // Always resubscribe fresh so an old subscription tied to a previous key can't linger.
+        const existing = await registration.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe();
+        const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToUint8Array(VAPID_PUBLIC_KEY) });
+        const json = subscription.toJSON();
+        await supabase.from("holiness_push_subscriptions").upsert(
+          { user_id: user.id, endpoint: subscription.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth, updated_at: new Date().toISOString() },
+          { onConflict: "user_id,endpoint" },
+        );
+      } catch {
+        setStatus({ text: "Could not set up push notifications on this device.", tone: "error" });
+        setSaving(false);
+        return;
+      }
+    }
+
+    const { error } = await supabase.from("holiness_reminders").upsert(
+      { user_id: user.id, enabled, channel, time_of_day: `${time}:00`, timezone, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" },
+    );
+    setStatus(error ? { text: `Could not save: ${error.message}`, tone: "error" } : { text: "Reminder settings saved.", tone: "ok" });
+    setSaving(false);
+  };
+
+  return <>
+    <PageHeader eyebrow="Account" title="Settings" description="Manage your account preferences." />
+    {/* Hidden marker: the existing appearance/theme picker (public/theme.js) looks for this
+        exact text to mount its panel. Kept so dark mode / color themes keep working. */}
+    <div className="rounded-3xl sr-only"><h3>Coming soon</h3></div>
+
+    <section className="rounded-3xl border border-[#DDD2C0] bg-white/70 p-7 shadow-sm md:p-9">
+      <div className="flex items-start gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#EBE3D0] text-[#8C6D23] text-xl">🔔</div>
+        <div>
+          <p className="font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Daily rhythm</p>
+          <h2 className="mt-2 font-serif text-2xl font-bold text-[#31231E]">Daily reminders</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#827264]">Choose whether Project Holiness should remind you to record the practices you completed.</p>
+        </div>
+      </div>
+
+      {loading ? <p className="mt-7 text-sm text-[#827264]">Loading…</p> : <div className="mt-7 rounded-2xl border border-[#DDD2C0] bg-[#F5F1E9] p-5">
+        <label className="flex cursor-pointer items-center justify-between gap-4">
+          <span>
+            <span className="block text-sm font-bold text-[#31231E]">Send me a daily reminder</span>
+            <span className="mt-1 block text-xs text-[#827264]">You can turn this off at any time.</span>
+          </span>
+          <input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)} className="h-5 w-5 accent-[#2D4C3C]" />
+        </label>
+
+        <div className={`mt-5 grid gap-4 sm:grid-cols-2 transition-opacity ${enabled ? "opacity-100" : "opacity-55 pointer-events-none"}`}>
+          <label className="block">
+            <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Time of day</span>
+            <input type="time" value={time} onChange={event => setTime(event.target.value)} className="w-full rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm text-[#31231E]" />
+          </label>
+          <label className="block">
+            <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Notification</span>
+            <select value={channel} onChange={event => setChannel(event.target.value as "push" | "email")} className="w-full rounded-xl border border-[#DDD2C0] bg-white px-4 py-3 text-sm text-[#31231E]">
+              <option value="push">Push notification</option>
+              <option value="email">Email</option>
+            </select>
+          </label>
+        </div>
+
+        <p className="mt-4 text-xs leading-5 text-[#827264]">
+          {channel === "push"
+            ? `Push notifications need permission on this device, and will say: "${REMINDER_MESSAGE}"`
+            : "Email delivery is not wired up yet in this environment — push notifications work now, email is a future addition."}
+        </p>
+
+        <Button onClick={handleSave} disabled={saving} className="mt-5">{saving ? "Saving…" : "Save reminder settings"}</Button>
+        {status && <p className={`mt-3 text-xs font-medium ${status.tone === "error" ? "text-[#DF3B32]" : "text-[#2D4C3C]"}`}>{status.text}</p>}
+      </div>}
+    </section>
+  </>;
 }
 
 function EmptyState({ title, detail, icon: Icon = Circle, action }: { title: string; detail: string; icon?: any; action?: ReactNode }) {
