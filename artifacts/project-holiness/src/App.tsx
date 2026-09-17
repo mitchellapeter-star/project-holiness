@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import {
   ArrowRight, BookOpen, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight,
-  Circle, ClipboardCheck, Cross, GripVertical, History, Menu, Pencil, Plus, Target, Trash2, X, AlertCircle, Bookmark, Compass, ChevronDown, ChevronUp, ShieldCheck
+  Circle, ClipboardCheck, Cross, GripVertical, History, Menu, Pencil, Plus, Target, Trash2, X, AlertCircle, Bookmark, Compass, ChevronDown, ChevronUp, ShieldCheck, User, Settings, LogOut
 } from "lucide-react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
@@ -15,7 +15,7 @@ import stainedGlassImg from "@/assets/stained-glass.jpg";
 
 const queryClient = new QueryClient();
 const today = new Date().toISOString().slice(0, 10);
-const productionAuthRedirect = "https://project-holiness.replit.app";
+const productionAuthRedirect = "https://project-holiness-lp13-tawny.vercel.app";
 const fixedProjectStatement = "There is a gap between where I am and the holiness I'm called to. Holiness means being set apart for God, growing toward sainthood, and conforming my will to His, the universal call every baptized person shares.\n\nIf married, this call extends to one's marriage as well, since spouses are meant to help sanctify one another.";
 const fixedLifeRationale = "Becoming holy leads to heaven, leaves a lasting effect on ourselves and those who come after us, and greatly improves our lives and the lives of those around us. Growth in holiness is growth in love, of God and neighbor, and it bears fruit far beyond ourselves.\n\nIf married, this includes a holy marriage, which shapes not only the spouses but their children as well.";
 
@@ -269,7 +269,32 @@ function Pill({ children, tone = "neutral" }: { children: ReactNode; tone?: "gre
   return <span className={`inline-flex items-center border rounded-full px-2.5 py-1 text-[11px] font-semibold ${tones[tone]}`}>{children}</span>;
 }
 
-function Shell({ children, onSignOut }: { children: ReactNode; onSignOut: () => void }) {
+function ProfileMenu({ email, onSignOut }: { email: string | null; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  return <div className="relative">
+    <button onClick={() => setOpen(true)} aria-label="Account menu" className="grid h-9 w-9 place-items-center rounded-full bg-[#EBE3D0] border border-[#DDD2C0] text-[#2D4C3C] hover:border-[#8C6D23] transition-colors">
+      <User size={17} />
+    </button>
+    {open && <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 backdrop-blur-sm p-4" onClick={() => setOpen(false)}>
+      <div className="w-full max-w-sm rounded-3xl border border-[#DDD2C0] bg-[#F5F1E9] p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[#DDD2C0] pb-4 mb-5">
+          <h2 className="font-serif text-xl font-bold text-[#31231E]">Account</h2>
+          <button onClick={() => setOpen(false)} className="rounded-full p-1.5 hover:bg-black/5" aria-label="Close"><X size={18} /></button>
+        </div>
+        <div className="flex flex-col items-center gap-3 mb-6">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] text-[#F5F1E9] shadow-md"><User size={26} /></div>
+          <p className="font-medium text-[#31231E] text-sm break-all text-center">{email ?? "Signed in"}</p>
+        </div>
+        <div className="space-y-1.5">
+          <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#5C4D43] hover:bg-black/5 hover:text-[#31231E] transition-colors"><span className="flex items-center gap-3"><Settings size={17} /> Settings</span><ChevronRight size={15} /></Link>
+          <button onClick={() => { setOpen(false); onSignOut(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#DF3B32] hover:bg-[#FFF0F0] transition-colors"><span className="flex items-center gap-3"><LogOut size={17} /> Sign out</span><ChevronRight size={15} /></button>
+        </div>
+      </div>
+    </div>}
+  </div>;
+}
+
+function Shell({ children, onSignOut, userEmail }: { children: ReactNode; onSignOut: () => void; userEmail: string | null }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   return <div className="paper-grain min-h-[100dvh] bg-[#F5F1E9] text-[#31231E] holy-pattern relative">
@@ -279,7 +304,7 @@ function Shell({ children, onSignOut }: { children: ReactNode; onSignOut: () => 
       <div className="mt-auto border-t border-[#DDD2C0] pt-5"><div className="mb-4 rounded-xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-4 shadow-sm border border-[#1A3326]"><p className="font-serif text-sm leading-relaxed text-[#D2E0D9] italic">“Let us not grow weary of doing good.”</p><p className="mt-3 font-mono text-[9px] font-semibold uppercase tracking-widest text-[#8FAD9D]">Galatians 6:9</p></div><button onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-[#5C4D43] hover:bg-black/5 hover:text-[#31231E] transition-colors">Sign out</button></div>
     </aside>
     {mobileOpen && <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setMobileOpen(false)}><div className="flex h-full w-[84%] max-w-[320px] flex-col overflow-y-auto bg-[#EBE3D0] p-5 text-[#31231E] shadow-2xl animate-in slide-in-from-left" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between"><Mark small /><button onClick={() => setMobileOpen(false)} className="rounded-full p-2 hover:bg-black/5" aria-label="Close navigation"><X size={20} /></button></div><nav className="mt-10 space-y-2">{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium ${location === href ? "bg-[#2D4C3C] border border-[#1A3326]/20 shadow-inner text-[#F5F1E9]" : "text-[#5C4D43]"}`}><Icon size={18} />{label}</Link>)}</nav><div className="mt-auto border-t border-[#DDD2C0] pt-5"><p className="mb-3 px-3 font-serif text-sm italic leading-relaxed text-[#5C4D43]">“Let us not grow weary of doing good.”</p><button onClick={() => { setMobileOpen(false); onSignOut(); }} className="flex min-h-12 w-full items-center justify-center rounded-xl border border-[#1A3326] bg-[#2D4C3C] px-4 py-3 text-sm font-semibold text-[#F5F1E9] shadow-sm hover:bg-[#426553]">Sign out</button></div></div></div>}
-    <main className="min-h-[100dvh] md:ml-[260px] relative z-10"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-[#DDD2C0]/60 bg-[#F5F1E9]/80 px-5 backdrop-blur-md md:px-10"><button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-black/5" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><div className="ml-auto flex items-center gap-4"><span className="hidden text-xs font-medium text-[#827264] sm:inline">A good day to tend the field.</span><div className="grid h-9 w-9 place-items-center rounded-full bg-[#EBE3D0] border border-[#DDD2C0] font-serif text-sm font-bold text-[#2D4C3C]">PH</div></div></header><div className="mx-auto max-w-[1180px] px-5 py-8 pb-24 md:px-10 md:py-12">{children}</div></main>
+    <main className="min-h-[100dvh] md:ml-[260px] relative z-10"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-[#DDD2C0]/60 bg-[#F5F1E9]/80 px-5 backdrop-blur-md md:px-10"><button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-black/5" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><div className="ml-auto flex items-center gap-4"><span className="hidden text-xs font-medium text-[#827264] sm:inline">A good day to tend the field.</span><ProfileMenu email={userEmail} onSignOut={onSignOut} /></div></header><div className="mx-auto max-w-[1180px] px-5 py-8 pb-24 md:px-10 md:py-12">{children}</div></main>
     <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-5 border-t border-[#DDD2C0] bg-[#EBE3D0]/95 px-1 py-2 backdrop-blur-lg md:hidden pb-safe">{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-medium transition-colors ${location === href ? "text-[#2D4C3C]" : "text-[#827264]"}`}><Icon size={18} strokeWidth={location === href ? 2.5 : 2} /><span>{label.split(" ")[0]}</span></Link>)}</nav>
   </div>;
 }
@@ -290,6 +315,8 @@ function Login({ onAuthed }: { onAuthed: () => void }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const submitAuth = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -311,7 +338,46 @@ function Login({ onAuthed }: { onAuthed: () => void }) {
     else onAuthed();
     setBusy(false);
   };
-  return <div className="paper-grain holy-pattern min-h-[100dvh] overflow-hidden bg-[#F5F1E9] relative"><div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: `url(${stainedGlassImg})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }} /><div className="absolute inset-0 bg-gradient-to-br from-[#F5F1E9]/95 via-[#F5F1E9]/90 to-[#EBE3D0]/95 pointer-events-none" /><div className="mx-auto flex min-h-[100dvh] max-w-[1320px] flex-col px-6 py-7 md:px-12 relative z-10"><header className="flex items-center justify-between"><Mark /><span className="font-mono text-[10px] font-semibold uppercase tracking-[.2em] text-[#5C4D43] drop-shadow-sm">A practical rule of life</span></header><main className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-24"><div className="animate-rise max-w-[600px]"><div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#DDD2C0] bg-white/40 backdrop-blur-md px-3 py-1.5 text-[11px] font-semibold text-[#5C4D43] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#8C6D23]" /> The universal call to holiness</div><h1 className="font-serif text-[clamp(3.15rem,7vw,6.4rem)] font-bold leading-[.98] tracking-[-.065em] text-[#31231E] drop-shadow-sm">Project<br /><span className="text-[#8C6D23] ornament-border pb-2">Holiness.</span></h1><h2 className="mt-9 max-w-[520px] font-serif text-2xl leading-9 text-[#5C4D43] drop-shadow-sm">A practical plan for closing the gap to holiness.</h2><p className="mt-5 max-w-[520px] text-base leading-7 text-[#31231E]/80">Honestly assess where you stand, turn what you learn into concrete action, and track it — one faithful step at a time.</p><form onSubmit={submitAuth} className="mt-10 max-w-[460px] rounded-2xl border border-[#DDD2C0] bg-white/60 backdrop-blur-xl p-5 shadow-xl"><div className="flex items-center justify-between gap-3 border-b border-[#DDD2C0] pb-4 mb-4"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">{isSupabaseConfigured ? "Private account" : "Supabase setup needed"}</p><p className="mt-1.5 text-xs text-[#827264] leading-relaxed">{isSupabaseConfigured ? "Your workspace follows your Supabase account." : "Add the Supabase environment values to enable sign in."}</p></div><div className="flex rounded-lg bg-black/5 p-1 text-[11px] font-semibold text-[#827264] border border-[#DDD2C0] shadow-inner"><button type="button" onClick={() => setMode("signin")} className={`rounded-md px-3 py-1.5 transition-all ${mode === "signin" ? "bg-white text-[#31231E] shadow-sm border border-[#DDD2C0]" : "hover:text-[#31231E]"}`}>Sign In</button><button type="button" onClick={() => setMode("signup")} className={`rounded-md px-3 py-1.5 transition-all ${mode === "signup" ? "bg-white text-[#31231E] shadow-sm border border-[#DDD2C0]" : "hover:text-[#31231E]"}`}>Create</button></div></div><div className="grid gap-3 sm:grid-cols-2"><input required type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="Email address" className="rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /><input required minLength={6} type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Password" className="rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /></div><button disabled={busy} type="submit" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2D4C3C] px-4 py-3 text-sm font-bold text-[#F5F1E9] shadow-md hover:bg-[#426553] border border-[#1A3326]/30 transition-all disabled:opacity-50">{busy ? "Working…" : mode === "signin" ? "Sign In" : "Create Account"} <ArrowRight size={16} /></button>{message && <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#FFF0F0] p-3 text-xs text-[#DF3B32] border border-[#F5A9A9]"><AlertCircle size={14} className="shrink-0" /><p role="status">{message}</p></div>}</form><p className="mt-5 text-xs text-[#827264] flex items-center gap-2"><span className="h-4 w-4 rounded-full bg-[#EBE3D0] border border-[#DDD2C0] flex items-center justify-center text-[#5C4D43]"><Check size={10} /></span> Private by default. {isSupabaseConfigured ? "This is your path, no one else's — your data is seen only by you." : "Ready once environment values are added."}</p></div><div className="relative animate-rise [animation-delay:120ms] hidden lg:block"><div className="absolute -inset-12 rounded-full bg-gradient-to-br from-[#8C6D23]/10 to-[#F5F1E9] blur-3xl opacity-60" /><div className="relative rounded-[32px] border border-[#DDD2C0] bg-gradient-to-br from-[#EBE3D0] to-[#F5F1E9] p-6 shadow-2xl md:p-8"><div className="rounded-[24px] border border-[#DDD2C0] bg-white/80 backdrop-blur-sm p-6 md:p-8 shadow-inner relative overflow-hidden"><div className="absolute top-0 right-0 p-4 opacity-10"><Cross size={120} strokeWidth={0.5} className="text-[#5C4D43]" /></div><div className="relative z-10"><div className="flex items-center justify-between border-b border-[#DDD2C0] pb-6"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">A faithful rhythm</p><h2 className="mt-3 font-serif text-2xl font-bold text-[#31231E]">Make room for grace.</h2></div><div className="grid h-12 w-12 place-items-center rounded-full bg-[#EBE3D0] text-[#8C6D23] border border-[#DDD2C0] shadow-sm"><Check size={22} /></div></div><div className="space-y-4 pt-6"><div className="flex items-center gap-4 rounded-2xl bg-[#EBE3D0] p-4 border border-[#DDD2C0] shadow-sm"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#2D4C3C] text-[#F5F1E9] shadow-inner"><Check size={16} /></span><div><p className="text-sm font-bold text-[#5C4D43]">Prayer before the phone</p><p className="text-xs text-[#827264] mt-0.5">Daily practice · completed</p></div></div><div className="flex items-center gap-4 rounded-2xl border border-[#DDD2C0] bg-white/30 p-4 shadow-sm"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-[#DDD2C0] bg-white/40" /><div><p className="text-sm font-bold text-[#31231E]">Name the next faithful action</p><p className="text-xs text-[#827264] mt-0.5">Formation Plan · due today</p></div></div></div><div className="mt-8 flex items-center justify-between border-t border-[#DDD2C0] pt-6"><span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#827264]">A life directed toward God</span><span className="text-sm font-bold text-[#5C4D43]">Begin again</span></div></div></div></div></div></main><footer className="flex items-center justify-between border-t border-[#DDD2C0] py-6 text-xs font-medium text-[#827264] relative z-10"><span>Made for ordinary faithfulness.</span><span className="font-mono font-bold tracking-widest text-[#5C4D43]">PH / 01</span></footer></div></div>;
+  const submitForgotPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    if (!supabase) {
+      setMessage("Supabase is not configured for this environment yet.");
+      setBusy(false);
+      return;
+    }
+    const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: productionAuthRedirect });
+    if (result.error) setMessage(result.error.message);
+    else setResetSent(true);
+    setBusy(false);
+  };
+  return <div className="paper-grain holy-pattern min-h-[100dvh] overflow-hidden bg-[#F5F1E9] relative"><div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: `url(${stainedGlassImg})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }} /><div className="absolute inset-0 bg-gradient-to-br from-[#F5F1E9]/95 via-[#F5F1E9]/90 to-[#EBE3D0]/95 pointer-events-none" /><div className="mx-auto flex min-h-[100dvh] max-w-[1320px] flex-col px-6 py-7 md:px-12 relative z-10"><header className="flex items-center justify-between"><Mark /><span className="font-mono text-[10px] font-semibold uppercase tracking-[.2em] text-[#5C4D43] drop-shadow-sm">A practical rule of life</span></header><main className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.04fr_.96fr] lg:gap-24"><div className="animate-rise max-w-[600px]"><div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#DDD2C0] bg-white/40 backdrop-blur-md px-3 py-1.5 text-[11px] font-semibold text-[#5C4D43] shadow-sm"><span className="h-1.5 w-1.5 rounded-full bg-[#8C6D23]" /> The universal call to holiness</div><h1 className="font-serif text-[clamp(3.15rem,7vw,6.4rem)] font-bold leading-[.98] tracking-[-.065em] text-[#31231E] drop-shadow-sm">Project<br /><span className="text-[#8C6D23] ornament-border pb-2">Holiness.</span></h1><h2 className="mt-9 max-w-[520px] font-serif text-2xl leading-9 text-[#5C4D43] drop-shadow-sm">A practical plan for closing the gap to holiness.</h2><p className="mt-5 max-w-[520px] text-base leading-7 text-[#31231E]/80">Honestly assess where you stand, turn what you learn into concrete action, and track it — one faithful step at a time.</p><form onSubmit={submitAuth} className="mt-10 max-w-[460px] rounded-2xl border border-[#DDD2C0] bg-white/60 backdrop-blur-xl p-5 shadow-xl">{forgotMode ? (resetSent ? <div><div className="flex items-center justify-between gap-3 border-b border-[#DDD2C0] pb-4 mb-4"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">Check your email</p><p className="mt-1.5 text-xs text-[#827264] leading-relaxed">A password reset link is on its way to {email}.</p></div></div><button type="button" onClick={() => { setForgotMode(false); setResetSent(false); setMessage(""); }} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2D4C3C] px-4 py-3 text-sm font-bold text-[#F5F1E9] shadow-md hover:bg-[#426553] border border-[#1A3326]/30 transition-all">Back to sign in</button></div> : <><div className="flex items-center justify-between gap-3 border-b border-[#DDD2C0] pb-4 mb-4"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">Reset your password</p><p className="mt-1.5 text-xs text-[#827264] leading-relaxed">We will email you a link to choose a new password.</p></div></div><input required type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="Email address" className="w-full rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /><button disabled={busy} onClick={submitForgotPassword} type="button" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2D4C3C] px-4 py-3 text-sm font-bold text-[#F5F1E9] shadow-md hover:bg-[#426553] border border-[#1A3326]/30 transition-all disabled:opacity-50">{busy ? "Working…" : "Send reset link"} <ArrowRight size={16} /></button><button type="button" onClick={() => { setForgotMode(false); setMessage(""); }} className="mt-3 w-full text-center text-xs font-semibold text-[#5C4D43] hover:text-[#31231E]">Back to sign in</button>{message && <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#FFF0F0] p-3 text-xs text-[#DF3B32] border border-[#F5A9A9]"><AlertCircle size={14} className="shrink-0" /><p role="status">{message}</p></div>}</>) : <><div className="flex items-center justify-between gap-3 border-b border-[#DDD2C0] pb-4 mb-4"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">{isSupabaseConfigured ? "Private account" : "Supabase setup needed"}</p><p className="mt-1.5 text-xs text-[#827264] leading-relaxed">{isSupabaseConfigured ? "Your workspace follows your Supabase account." : "Add the Supabase environment values to enable sign in."}</p></div><div className="flex rounded-lg bg-black/5 p-1 text-[11px] font-semibold text-[#827264] border border-[#DDD2C0] shadow-inner"><button type="button" onClick={() => setMode("signin")} className={`rounded-md px-3 py-1.5 transition-all ${mode === "signin" ? "bg-white text-[#31231E] shadow-sm border border-[#DDD2C0]" : "hover:text-[#31231E]"}`}>Sign In</button><button type="button" onClick={() => setMode("signup")} className={`rounded-md px-3 py-1.5 transition-all ${mode === "signup" ? "bg-white text-[#31231E] shadow-sm border border-[#DDD2C0]" : "hover:text-[#31231E]"}`}>Create</button></div></div><div className="grid gap-3 sm:grid-cols-2"><input required type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="Email address" className="rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /><input required minLength={6} type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Password" className="rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /></div>{mode === "signin" && <button type="button" onClick={() => { setForgotMode(true); setMessage(""); }} className="mt-2.5 text-xs font-semibold text-[#5C4D43] hover:text-[#31231E]">Forgot password?</button>}<button disabled={busy} type="submit" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2D4C3C] px-4 py-3 text-sm font-bold text-[#F5F1E9] shadow-md hover:bg-[#426553] border border-[#1A3326]/30 transition-all disabled:opacity-50">{busy ? "Working…" : mode === "signin" ? "Sign In" : "Create Account"} <ArrowRight size={16} /></button>{message && <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#FFF0F0] p-3 text-xs text-[#DF3B32] border border-[#F5A9A9]"><AlertCircle size={14} className="shrink-0" /><p role="status">{message}</p></div>}</>}</form><p className="mt-5 text-xs text-[#827264] flex items-center gap-2"><span className="h-4 w-4 rounded-full bg-[#EBE3D0] border border-[#DDD2C0] flex items-center justify-center text-[#5C4D43]"><Check size={10} /></span> Private by default. {isSupabaseConfigured ? "This is your path, no one else's — your data is seen only by you." : "Ready once environment values are added."}</p></div><div className="relative animate-rise [animation-delay:120ms] hidden lg:block"><div className="absolute -inset-12 rounded-full bg-gradient-to-br from-[#8C6D23]/10 to-[#F5F1E9] blur-3xl opacity-60" /><div className="relative rounded-[32px] border border-[#DDD2C0] bg-gradient-to-br from-[#EBE3D0] to-[#F5F1E9] p-6 shadow-2xl md:p-8"><div className="rounded-[24px] border border-[#DDD2C0] bg-white/80 backdrop-blur-sm p-6 md:p-8 shadow-inner relative overflow-hidden"><div className="absolute top-0 right-0 p-4 opacity-10"><Cross size={120} strokeWidth={0.5} className="text-[#5C4D43]" /></div><div className="relative z-10"><div className="flex items-center justify-between border-b border-[#DDD2C0] pb-6"><div><p className="font-mono text-[10px] font-bold uppercase tracking-[.18em] text-[#8C6D23]">A faithful rhythm</p><h2 className="mt-3 font-serif text-2xl font-bold text-[#31231E]">Make room for grace.</h2></div><div className="grid h-12 w-12 place-items-center rounded-full bg-[#EBE3D0] text-[#8C6D23] border border-[#DDD2C0] shadow-sm"><Check size={22} /></div></div><div className="space-y-4 pt-6"><div className="flex items-center gap-4 rounded-2xl bg-[#EBE3D0] p-4 border border-[#DDD2C0] shadow-sm"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#2D4C3C] text-[#F5F1E9] shadow-inner"><Check size={16} /></span><div><p className="text-sm font-bold text-[#5C4D43]">Prayer before the phone</p><p className="text-xs text-[#827264] mt-0.5">Daily practice · completed</p></div></div><div className="flex items-center gap-4 rounded-2xl border border-[#DDD2C0] bg-white/30 p-4 shadow-sm"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-[#DDD2C0] bg-white/40" /><div><p className="text-sm font-bold text-[#31231E]">Name the next faithful action</p><p className="text-xs text-[#827264] mt-0.5">Formation Plan · due today</p></div></div></div><div className="mt-8 flex items-center justify-between border-t border-[#DDD2C0] pt-6"><span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#827264]">A life directed toward God</span><span className="text-sm font-bold text-[#5C4D43]">Begin again</span></div></div></div></div></div></main><footer className="flex items-center justify-between border-t border-[#DDD2C0] py-6 text-xs font-medium text-[#827264] relative z-10"><span>Made for ordinary faithfulness.</span><span className="font-mono font-bold tracking-widest text-[#5C4D43]">PH / 01</span></footer></div></div>;
+}
+
+function ResetPasswordPage({ onDone }: { onDone: () => void }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setMessage("");
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match.");
+      return;
+    }
+    setBusy(true);
+    const result = await supabase?.auth.updateUser({ password });
+    if (result?.error) setMessage(result.error.message);
+    else onDone();
+    setBusy(false);
+  };
+  return <div className="paper-grain holy-pattern grid min-h-[100dvh] place-items-center bg-[#F5F1E9] px-6 relative"><div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ backgroundImage: `url(${stainedGlassImg})`, backgroundSize: 'cover', backgroundPosition: 'center 30%' }} /><div className="absolute inset-0 bg-gradient-to-br from-[#F5F1E9]/95 via-[#F5F1E9]/90 to-[#EBE3D0]/95 pointer-events-none" /><form onSubmit={submit} className="relative z-10 w-full max-w-[420px] rounded-2xl border border-[#DDD2C0] bg-white/70 backdrop-blur-xl p-6 shadow-xl"><Mark /><h1 className="mt-6 font-serif text-2xl font-bold text-[#31231E]">Choose a new password</h1><p className="mt-2 text-sm text-[#5C4D43] leading-relaxed">You are verified. Set a new password to finish resetting your account.</p><div className="mt-6 space-y-3"><input required minLength={6} type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="New password" className="w-full rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /><input required minLength={6} type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="Confirm new password" className="w-full rounded-xl border border-[#DDD2C0] bg-white/50 px-3.5 py-3 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner placeholder:text-[#827264]" /></div><button disabled={busy} type="submit" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2D4C3C] px-4 py-3 text-sm font-bold text-[#F5F1E9] shadow-md hover:bg-[#426553] border border-[#1A3326]/30 transition-all disabled:opacity-50">{busy ? "Working…" : "Update password"} <ArrowRight size={16} /></button>{message && <div className="mt-3 flex items-center gap-2 rounded-lg bg-[#FFF0F0] p-3 text-xs text-[#DF3B32] border border-[#F5A9A9]"><AlertCircle size={14} className="shrink-0" /><p role="status">{message}</p></div>}</form></div>;
+}
+
+function SettingsPage() {
+  return <><PageHeader eyebrow="Account" title="Settings" description="Manage your account preferences." /><div className="rounded-3xl border border-dashed border-[#DDD2C0] bg-white/40 py-16 px-6 text-center shadow-sm"><div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-[#EBE3D0] text-[#5C4D43]"><Settings size={26} strokeWidth={1.5} /></div><h3 className="font-serif text-xl font-bold text-[#31231E]">Coming soon…</h3><p className="mt-2 text-sm text-[#827264] max-w-sm mx-auto leading-relaxed">Account settings are on the way. For now, use the profile menu to sign out or reset your password from the sign-in screen.</p></div></>;
 }
 
 function EmptyState({ title, detail, icon: Icon = Circle, action }: { title: string; detail: string; icon?: any; action?: ReactNode }) {
@@ -334,14 +400,29 @@ function DashboardHome({ store }: { store: Store }) {
 }
 
 function GuidePage() {
-  const a3Flow = [
-    { label: "Project Statement", detail: "The call you are answering" },
-    { label: "Life Rationale", detail: "Why this matters" },
-    { label: "Problem", detail: "The gap in your current life" },
-    { label: "Root Cause", detail: "What is driving the gap" },
-    { label: "Countermeasures", detail: "How you will address the cause" },
-    { label: "Action Items", detail: "Specific practices and commitments" },
-    { label: "Practices", detail: "The rhythm you track over time" },
+  const a3Groups = [
+    {
+      section: "I. Foundation",
+      steps: [
+        { label: "Project Statement", detail: "The call you are answering" },
+        { label: "Life Rationale", detail: "Why this matters" },
+      ],
+    },
+    {
+      section: "II. Assessment & Strategy",
+      steps: [
+        { label: "Problem", detail: "The gap in your current life" },
+        { label: "Root Cause", detail: "What is driving the gap" },
+        { label: "Countermeasures", detail: "How you will address the cause" },
+      ],
+    },
+    {
+      section: "III. Execution",
+      steps: [
+        { label: "Action Items", detail: "Specific practices and commitments" },
+        { label: "Practices", detail: "The rhythm you track over time" },
+      ],
+    },
   ];
   return (
     <>
@@ -379,21 +460,33 @@ function GuidePage() {
 
         <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-6 shadow-sm backdrop-blur md:p-8">
           <p className="mb-5 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">At a glance</p>
-          <div className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:gap-1.5" aria-label="Formation Plan process flow">
-            {a3Flow.map((step, index) => (
-              <div key={step.label} className="contents">
-                <div className="flex min-h-[104px] flex-1 flex-col justify-center rounded-2xl border border-[#DDD2C0] bg-white/75 px-4 py-4 shadow-sm">
-                  <span className="mb-2 font-mono text-[9px] font-bold uppercase tracking-widest text-[#8C6D23]">Step {index + 1}</span>
-                  <strong className="font-serif text-base leading-tight text-[#2D4C3C]">{step.label}</strong>
-                  <span className="mt-1.5 text-xs leading-relaxed text-[#827264]">{step.detail}</span>
-                </div>
-                {index < a3Flow.length - 1 && (
-                  <div className="flex h-7 shrink-0 items-center justify-center text-[#8C6D23] lg:h-auto lg:w-5" aria-hidden="true">
-                    <ArrowRight size={18} className="rotate-90 lg:rotate-0" />
+          <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:gap-6" aria-label="Formation Plan process flow">
+            {a3Groups.map((group, groupIndex) => {
+              const stepsBefore = a3Groups.slice(0, groupIndex).reduce((sum, g) => sum + g.steps.length, 0);
+              return (
+                <div key={group.section} className="flex-1">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#CDBD9D] bg-[#EBE3D0] px-3 py-1.5">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#8C6D23]">{group.section}</span>
                   </div>
-                )}
-              </div>
-            ))}
+                  <div className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:gap-1.5">
+                    {group.steps.map((step, stepIndex) => (
+                      <div key={step.label} className="contents">
+                        <div className="flex min-h-[104px] flex-1 flex-col justify-center rounded-2xl border border-[#DDD2C0] bg-white/75 px-4 py-4 shadow-sm">
+                          <span className="mb-2 font-mono text-[9px] font-bold uppercase tracking-widest text-[#8C6D23]">Step {stepsBefore + stepIndex + 1}</span>
+                          <strong className="font-serif text-base leading-tight text-[#2D4C3C]">{step.label}</strong>
+                          <span className="mt-1.5 text-xs leading-relaxed text-[#827264]">{step.detail}</span>
+                        </div>
+                        {stepIndex < group.steps.length - 1 && (
+                          <div className="flex h-7 shrink-0 items-center justify-center text-[#8C6D23] lg:h-auto lg:w-5" aria-hidden="true">
+                            <ArrowRight size={18} className="rotate-90 lg:rotate-0" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -501,6 +594,7 @@ function A3Page({ store, setStore }: { store: Store; setStore: Dispatch<SetState
   const [showActionForm, setShowActionForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionDraft, setActionDraft] = useState<Omit<ActionItem, "id">>(blankAction());
+  const [openFrequencyGroups, setOpenFrequencyGroups] = useState<Partial<Record<Frequency, boolean>>>({});
 
   const [showProblemForm, setShowProblemForm] = useState(false);
   const [editingProblemId, setEditingProblemId] = useState<string | null>(null);
@@ -681,17 +775,42 @@ function A3Page({ store, setStore }: { store: Store; setStore: Dispatch<SetState
         </div>
         {showActionForm && <ActionForm value={actionDraft} onChange={setActionDraft} onSubmit={saveAction} onCancel={() => setShowActionForm(false)} editing={!!editingId} />}
         {!showActionForm && store.a3.actionItems.length === 0 && <div className="mt-6"><EmptyState title="No action items yet." detail="Translate your countermeasures into specific, scheduled practices." action={<Button onClick={openAddAction}>Add Action</Button>} /></div>}
-        {!showActionForm && store.a3.actionItems.length > 0 && <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{store.a3.actionItems.map(action => <div key={action.id} className={`flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md ${action.active ? "border-[#DDD2C0] bg-white" : "border-[#EBE3D0] bg-[#F5F1E9] opacity-75"}`}><div className="mb-4">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <h3 className={`font-serif text-[17px] font-bold leading-snug ${action.active ? "text-[#2D4C3C]" : "text-[#827264]"}`}>{action.title}</h3>
-            {!action.active && <span className="shrink-0 rounded bg-[#DDD2C0] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#827264]">Inactive</span>}
+        {!showActionForm && store.a3.actionItems.length > 0 && (
+          <div className="mt-6 space-y-3">
+            {(["daily", "weekly", "monthly", "one-time", "other"] as Frequency[]).map(frequency => {
+              const items = store.a3.actionItems.filter(action => action.frequency === frequency);
+              if (items.length === 0) return null;
+              const isOpen = openFrequencyGroups[frequency] ?? false;
+              return (
+                <div key={frequency} className="rounded-2xl border border-[#DDD2C0] bg-white/60 overflow-hidden">
+                  <button
+                    onClick={() => setOpenFrequencyGroups(current => ({ ...current, [frequency]: !isOpen }))}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-black/5"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <History size={15} className="text-[#8C6D23]" />
+                      <span className="font-serif text-base font-bold text-[#31231E]">{frequencyLabels[frequency]}</span>
+                      <span className="rounded-full bg-[#EBE3D0] px-2 py-0.5 font-mono text-[10px] font-bold text-[#8C6D23]">{items.length}</span>
+                    </span>
+                    <ChevronDown size={18} className={`shrink-0 text-[#827264] transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && <div className="grid gap-4 border-t border-[#DDD2C0] p-5 md:grid-cols-2 lg:grid-cols-3">{items.map(action => <div key={action.id} className={`flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md ${action.active ? "border-[#DDD2C0] bg-white" : "border-[#EBE3D0] bg-[#F5F1E9] opacity-75"}`}><div className="mb-4">
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <h3 className={`font-serif text-[17px] font-bold leading-snug ${action.active ? "text-[#2D4C3C]" : "text-[#827264]"}`}>{action.title}</h3>
+                      {!action.active && <span className="shrink-0 rounded bg-[#DDD2C0] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#827264]">Inactive</span>}
+                    </div>
+                    {action.description && <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-[#827264]">{action.description}</p>}
+                    <div className="space-y-1.5">
+                      <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><CalendarDays size={13} className="text-[#8C6D23]" /> Starts {shortDate(action.startDate)}</p>
+                      <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><History size={13} className="text-[#8C6D23]" /> {frequencyLabels[action.frequency]}</p>
+                    </div>
+                  </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4">{(() => { const derived = derivedActionStatus(action, store.completions); return <Pill tone={derived.tone}>{derived.label}</Pill>; })()}<div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
+                </div>
+              );
+            })}
           </div>
-          {action.description && <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-[#827264]">{action.description}</p>}
-          <div className="space-y-1.5">
-            <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><CalendarDays size={13} className="text-[#8C6D23]" /> Starts {shortDate(action.startDate)}</p>
-            <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><History size={13} className="text-[#8C6D23]" /> {frequencyLabels[action.frequency]}</p>
-          </div>
-        </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4">{(() => { const derived = derivedActionStatus(action, store.completions); return <Pill tone={derived.tone}>{derived.label}</Pill>; })()}<div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
+        )}
       </section>
     </div>
   </>;
@@ -925,6 +1044,8 @@ function CallingLogPage({ store, setStore }: { store: Store; setStore: Dispatch<
 export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [hydrationReady, setHydrationReady] = useState(false);
@@ -1033,12 +1154,15 @@ export default function App() {
     supabase?.auth.getSession().then(({ data: { session } }) => {
       setAuthed(!!session);
       setAuthUserId(session?.user.id ?? null);
+      setAuthUserEmail(session?.user.email ?? null);
       authAccessToken.current = session?.access_token ?? "";
     });
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((event, session) => {
       setAuthed(!!session);
       setAuthUserId(session?.user.id ?? null);
+      setAuthUserEmail(session?.user.email ?? null);
       authAccessToken.current = session?.access_token ?? "";
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
     }) ?? { data: { subscription: { unsubscribe: () => { } } } };
     return () => subscription.unsubscribe();
   }, []);
@@ -1142,7 +1266,8 @@ export default function App() {
   if (workspaceError) return <div className="grid min-h-[100dvh] place-items-center bg-[#F5F1E9] px-6 text-[#31231E] holy-pattern"><div className="max-w-md rounded-3xl border border-[#DDD2C0] bg-white/80 p-8 text-center shadow-xl"><Mark /><h1 className="mt-7 font-serif text-2xl font-bold">Workspace temporarily unavailable</h1><p className="mt-3 text-sm leading-relaxed text-[#5C4D43]">{workspaceError}</p><Button onClick={() => window.location.reload()} className="mt-6">Retry loading</Button></div></div>;
   if (authed === null || loading || !store) return <div className="grid min-h-[100dvh] place-items-center bg-[#F5F1E9] text-[#31231E] holy-pattern"><div className="flex flex-col items-center gap-4"><Mark /><p className="font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#827264] animate-pulse">Preparing workspace</p></div></div>;
   if (!authed) return <QueryClientProvider client={queryClient}><TooltipProvider><Login onAuthed={() => setAuthed(true)} /><Toaster /></TooltipProvider></QueryClientProvider>;
-  if (saveIssue) return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut}><div className="grid min-h-[60vh] place-items-center px-6"><div role="alert" className="max-w-lg rounded-3xl border border-[#CDBD9D] bg-[#FFF9E8] p-8 text-center shadow-xl"><ShieldCheck className="mx-auto text-[#8C6D23]" size={32} /><h1 className="mt-5 font-serif text-2xl font-bold text-[#31231E]">Saving paused to protect your data</h1><p className="mt-3 text-sm leading-relaxed text-[#5C4D43]">{saveIssue}</p><Button onClick={() => window.location.reload()} className="mt-6">Reload protected workspace</Button></div></div></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
+  if (recoveryMode) return <QueryClientProvider client={queryClient}><TooltipProvider><ResetPasswordPage onDone={() => setRecoveryMode(false)} /><Toaster /></TooltipProvider></QueryClientProvider>;
+  if (saveIssue) return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail}><div className="grid min-h-[60vh] place-items-center px-6"><div role="alert" className="max-w-lg rounded-3xl border border-[#CDBD9D] bg-[#FFF9E8] p-8 text-center shadow-xl"><ShieldCheck className="mx-auto text-[#8C6D23]" size={32} /><h1 className="mt-5 font-serif text-2xl font-bold text-[#31231E]">Saving paused to protect your data</h1><p className="mt-3 text-sm leading-relaxed text-[#5C4D43]">{saveIssue}</p><Button onClick={() => window.location.reload()} className="mt-6">Reload protected workspace</Button></div></div></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
 
-  return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut}><Switch><Route path="/"><DashboardHome store={store} /></Route><Route path="/dashboard"><DashboardHome store={store} /></Route><Route path="/guide"><GuidePage /></Route><Route path="/a3"><A3Page store={store} setStore={updateStore} /></Route><Route path="/leader-standard-work"><StandardWorkPage store={store} setStore={updateStore} /></Route><Route path="/calling-log"><CallingLogPage store={store} setStore={updateStore} /></Route><Route><div className="py-20 text-center"><h2 className="font-serif text-2xl font-bold text-[#31231E]">Page not found</h2><p className="mt-2 text-[#5C4D43]">The path you are looking for does not exist.</p><Link href="/dashboard" className="mt-6 inline-flex text-sm font-bold text-[#426553] hover:text-[#2D4C3C]">Return to dashboard</Link></div></Route></Switch></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail}><Switch><Route path="/"><DashboardHome store={store} /></Route><Route path="/dashboard"><DashboardHome store={store} /></Route><Route path="/guide"><GuidePage /></Route><Route path="/a3"><A3Page store={store} setStore={updateStore} /></Route><Route path="/leader-standard-work"><StandardWorkPage store={store} setStore={updateStore} /></Route><Route path="/calling-log"><CallingLogPage store={store} setStore={updateStore} /></Route><Route path="/settings"><SettingsPage /></Route><Route><div className="py-20 text-center"><h2 className="font-serif text-2xl font-bold text-[#31231E]">Page not found</h2><p className="mt-2 text-[#5C4D43]">The path you are looking for does not exist.</p><Link href="/dashboard" className="mt-6 inline-flex text-sm font-bold text-[#426553] hover:text-[#2D4C3C]">Return to dashboard</Link></div></Route></Switch></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
 }
