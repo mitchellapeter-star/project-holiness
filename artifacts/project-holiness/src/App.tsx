@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import {
   ArrowRight, BookOpen, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight,
-  Circle, ClipboardCheck, Cross, GripVertical, History, Menu, Pencil, Plus, Target, Trash2, X, AlertCircle, Bookmark, Compass, ChevronDown, ChevronUp, ShieldCheck, User, Settings, LogOut
+  Circle, ClipboardCheck, Cross, GripVertical, History, Menu, Pencil, Plus, Target, Trash2, X, AlertCircle, Bookmark, Compass, ChevronDown, ChevronUp, ShieldCheck, User, Settings, LogOut,
+  Heart, Star, Shield, Key, Bird, Flame, Flower2, Anchor, Sun
 } from "lucide-react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
@@ -16,6 +17,22 @@ import stainedGlassImg from "@/assets/stained-glass.jpg";
 const queryClient = new QueryClient();
 const today = new Date().toISOString().slice(0, 10);
 const productionAuthRedirect = "https://project-holiness-lp13-tawny.vercel.app";
+
+const avatarOptions = [
+  { key: "cross", label: "Holy Cross", icon: Cross, bg: "#2D4C3C", fg: "#F5F1E9" },
+  { key: "heart", label: "Sacred Heart", icon: Heart, bg: "#8B2E2E", fg: "#FCEAEA" },
+  { key: "star", label: "Star of the Sea", icon: Star, bg: "#2C4A6B", fg: "#EAF1FA" },
+  { key: "shield", label: "St. Michael", icon: Shield, bg: "#5B5F66", fg: "#F2F3F4" },
+  { key: "key", label: "St. Peter", icon: Key, bg: "#8C6D23", fg: "#FFF6DF" },
+  { key: "bird", label: "St. Francis", icon: Bird, bg: "#6B7A4A", fg: "#F3F6EC" },
+  { key: "flame", label: "Pentecost", icon: Flame, bg: "#B8552E", fg: "#FFF1E6" },
+  { key: "flower", label: "St. Thérèse", icon: Flower2, bg: "#B4667F", fg: "#FDEEF2" },
+  { key: "anchor", label: "Anchor of Hope", icon: Anchor, bg: "#2B4159", fg: "#E9F0F6" },
+  { key: "sun", label: "Divine Mercy", icon: Sun, bg: "#C79A2E", fg: "#FFF9E8" },
+];
+function avatarFor(key: string | null | undefined) {
+  return avatarOptions.find(option => option.key === key);
+}
 const fixedProjectStatement = "There is a gap between where I am and the holiness I'm called to. Holiness means being set apart for God, growing toward sainthood, and conforming my will to His, the universal call every baptized person shares.\n\nIf married, this call extends to one's marriage as well, since spouses are meant to help sanctify one another.";
 const fixedLifeRationale = "Becoming holy leads to heaven, leaves a lasting effect on ourselves and those who come after us, and greatly improves our lives and the lives of those around us. Growth in holiness is growth in love, of God and neighbor, and it bears fruit far beyond ourselves.\n\nIf married, this includes a holy marriage, which shapes not only the spouses but their children as well.";
 
@@ -192,6 +209,15 @@ function completionFor(completions: ActionCompletion[], actionId: string, period
   return completions.find(completion => completion.actionItemId === actionId && completion.completionPeriod === period)?.status;
 }
 
+// Percentage of this month's planned occurrences marked complete. Only meaningful for
+// recurring (daily/weekly/monthly) actions; returns null when there's nothing planned this month.
+function actionMonthCompletion(action: ActionItem, completions: ActionCompletion[], month: string): number | null {
+  const periods = periodsForAction(action, month);
+  if (periods.length === 0) return null;
+  const completedCount = periods.filter(period => completionFor(completions, action.id, period) === "completed").length;
+  return Math.round((completedCount / periods.length) * 100);
+}
+
 // Derives a display status for an action item instead of relying on a manually set field.
 // Recurring items (daily/weekly/monthly) are tracked ongoing in Practices, so they read "In practice."
 // One-time/other items reflect their single completion record: Open, Complete, or Missed.
@@ -269,23 +295,71 @@ function Pill({ children, tone = "neutral" }: { children: ReactNode; tone?: "gre
   return <span className={`inline-flex items-center border rounded-full px-2.5 py-1 text-[11px] font-semibold ${tones[tone]}`}>{children}</span>;
 }
 
-function ProfileMenu({ email, onSignOut }: { email: string | null; onSignOut: () => void }) {
+function ProfileMenu({ email, displayName, avatarKey, onSignOut, onSaveProfile }: { email: string | null; displayName: string | null; avatarKey: string | null; onSignOut: () => void; onSaveProfile: (name: string, avatar: string) => Promise<boolean> }) {
   const [open, setOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState(displayName ?? "");
+  const [avatarDraft, setAvatarDraft] = useState(avatarKey ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const openMenu = () => {
+    setNameDraft(displayName ?? "");
+    setAvatarDraft(avatarKey ?? "");
+    setSaved(false);
+    setSaveError("");
+    setOpen(true);
+  };
+
+  const headerAvatar = avatarFor(avatarKey);
+  const HeaderIcon = headerAvatar?.icon ?? User;
+  const previewAvatar = avatarFor(avatarDraft) ?? headerAvatar;
+  const PreviewIcon = previewAvatar?.icon ?? User;
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError("");
+    const ok = await onSaveProfile(nameDraft.trim(), avatarDraft);
+    setSaving(false);
+    if (ok) setSaved(true);
+    else setSaveError("Could not save your changes. Try again.");
+  };
+
   return <div className="relative">
-    <button onClick={() => setOpen(true)} aria-label="Account menu" className="grid h-9 w-9 place-items-center rounded-full bg-[#EBE3D0] border border-[#DDD2C0] text-[#2D4C3C] hover:border-[#8C6D23] transition-colors">
-      <User size={17} />
+    <button onClick={openMenu} aria-label="Account menu" className="grid h-9 w-9 place-items-center rounded-full border border-[#DDD2C0] transition-colors hover:border-[#8C6D23]" style={{ background: headerAvatar?.bg ?? "#EBE3D0", color: headerAvatar?.fg ?? "#2D4C3C" }}>
+      <HeaderIcon size={17} />
     </button>
-    {open && <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 backdrop-blur-sm p-4" onClick={() => setOpen(false)}>
-      <div className="w-full max-w-sm rounded-3xl border border-[#DDD2C0] bg-[#F5F1E9] p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
+    {open && <div className="fixed inset-0 z-50 grid place-items-start justify-items-center overflow-y-auto bg-black/30 backdrop-blur-sm p-4 py-10" onClick={() => setOpen(false)}>
+      <div className="w-full max-w-md rounded-3xl border border-[#DDD2C0] bg-[#F5F1E9] p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#DDD2C0] pb-4 mb-5">
           <h2 className="font-serif text-xl font-bold text-[#31231E]">Account</h2>
           <button onClick={() => setOpen(false)} className="rounded-full p-1.5 hover:bg-black/5" aria-label="Close"><X size={18} /></button>
         </div>
-        <div className="flex flex-col items-center gap-3 mb-6">
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] text-[#F5F1E9] shadow-md"><User size={26} /></div>
-          <p className="font-medium text-[#31231E] text-sm break-all text-center">{email ?? "Signed in"}</p>
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl shadow-md" style={{ background: previewAvatar?.bg ?? "#2D4C3C", color: previewAvatar?.fg ?? "#F5F1E9" }}><PreviewIcon size={26} /></div>
+          {displayName && <p className="font-serif font-bold text-[#31231E] text-base text-center">{displayName}</p>}
+          <p className="text-xs text-[#827264] break-all text-center">{email ?? "Signed in"}</p>
         </div>
-        <div className="space-y-1.5">
+
+        <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Name</label>
+        <input value={nameDraft} onChange={event => { setNameDraft(event.target.value); setSaved(false); }} placeholder="Add your name" className="w-full rounded-xl border border-[#DDD2C0] bg-white/60 px-3.5 py-2.5 text-sm text-[#31231E] outline-none focus:border-[#426553] focus:ring-2 focus:ring-[#EBE3D0] transition-all shadow-inner mb-5" />
+
+        <label className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#827264]">Choose an avatar</label>
+        <div className="mb-5 grid grid-cols-5 gap-2.5">
+          {avatarOptions.map(option => {
+            const Icon = option.icon;
+            const selected = avatarDraft === option.key;
+            return <button key={option.key} type="button" onClick={() => { setAvatarDraft(option.key); setSaved(false); }} title={option.label} aria-label={option.label} aria-pressed={selected} className={`grid aspect-square place-items-center rounded-xl border-2 transition-all ${selected ? "border-[#8C6D23] scale-105 shadow-md" : "border-transparent hover:border-[#DDD2C0]"}`} style={{ background: option.bg, color: option.fg }}>
+              <Icon size={18} />
+            </button>;
+          })}
+        </div>
+        {previewAvatar && <p className="mb-4 -mt-3 text-xs text-[#827264]">{previewAvatar.label}</p>}
+
+        <Button onClick={handleSave} disabled={saving} className="w-full mb-2">{saving ? "Saving…" : saved ? "Saved" : "Save changes"}</Button>
+        {saveError && <p className="mb-3 text-xs text-[#DF3B32]">{saveError}</p>}
+
+        <div className="space-y-1.5 border-t border-[#DDD2C0] pt-4 mt-3">
           <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#5C4D43] hover:bg-black/5 hover:text-[#31231E] transition-colors"><span className="flex items-center gap-3"><Settings size={17} /> Settings</span><ChevronRight size={15} /></Link>
           <button onClick={() => { setOpen(false); onSignOut(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#DF3B32] hover:bg-[#FFF0F0] transition-colors"><span className="flex items-center gap-3"><LogOut size={17} /> Sign out</span><ChevronRight size={15} /></button>
         </div>
@@ -294,7 +368,7 @@ function ProfileMenu({ email, onSignOut }: { email: string | null; onSignOut: ()
   </div>;
 }
 
-function Shell({ children, onSignOut, userEmail }: { children: ReactNode; onSignOut: () => void; userEmail: string | null }) {
+function Shell({ children, onSignOut, userEmail, displayName, avatarKey, onSaveProfile }: { children: ReactNode; onSignOut: () => void; userEmail: string | null; displayName: string | null; avatarKey: string | null; onSaveProfile: (name: string, avatar: string) => Promise<boolean> }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   return <div className="paper-grain min-h-[100dvh] bg-[#F5F1E9] text-[#31231E] holy-pattern relative">
@@ -304,7 +378,7 @@ function Shell({ children, onSignOut, userEmail }: { children: ReactNode; onSign
       <div className="mt-auto border-t border-[#DDD2C0] pt-5"><div className="mb-4 rounded-xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-4 shadow-sm border border-[#1A3326]"><p className="font-serif text-sm leading-relaxed text-[#D2E0D9] italic">“Let us not grow weary of doing good.”</p><p className="mt-3 font-mono text-[9px] font-semibold uppercase tracking-widest text-[#8FAD9D]">Galatians 6:9</p></div><button onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-[#5C4D43] hover:bg-black/5 hover:text-[#31231E] transition-colors">Sign out</button></div>
     </aside>
     {mobileOpen && <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setMobileOpen(false)}><div className="flex h-full w-[84%] max-w-[320px] flex-col overflow-y-auto bg-[#EBE3D0] p-5 text-[#31231E] shadow-2xl animate-in slide-in-from-left" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between"><Mark small /><button onClick={() => setMobileOpen(false)} className="rounded-full p-2 hover:bg-black/5" aria-label="Close navigation"><X size={20} /></button></div><nav className="mt-10 space-y-2">{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium ${location === href ? "bg-[#2D4C3C] border border-[#1A3326]/20 shadow-inner text-[#F5F1E9]" : "text-[#5C4D43]"}`}><Icon size={18} />{label}</Link>)}</nav><div className="mt-auto border-t border-[#DDD2C0] pt-5"><p className="mb-3 px-3 font-serif text-sm italic leading-relaxed text-[#5C4D43]">“Let us not grow weary of doing good.”</p><button onClick={() => { setMobileOpen(false); onSignOut(); }} className="flex min-h-12 w-full items-center justify-center rounded-xl border border-[#1A3326] bg-[#2D4C3C] px-4 py-3 text-sm font-semibold text-[#F5F1E9] shadow-sm hover:bg-[#426553]">Sign out</button></div></div></div>}
-    <main className="min-h-[100dvh] md:ml-[260px] relative z-10"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-[#DDD2C0]/60 bg-[#F5F1E9]/80 px-5 backdrop-blur-md md:px-10"><button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-black/5" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><div className="ml-auto flex items-center gap-4"><span className="hidden text-xs font-medium text-[#827264] sm:inline">A good day to tend the field.</span><ProfileMenu email={userEmail} onSignOut={onSignOut} /></div></header><div className="mx-auto max-w-[1180px] px-5 py-8 pb-24 md:px-10 md:py-12">{children}</div></main>
+    <main className="min-h-[100dvh] md:ml-[260px] relative z-10"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-[#DDD2C0]/60 bg-[#F5F1E9]/80 px-5 backdrop-blur-md md:px-10"><button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-black/5" onClick={() => setMobileOpen(true)}><Menu size={21} /></button><div className="ml-auto flex items-center gap-4"><span className="hidden text-xs font-medium text-[#827264] sm:inline">A good day to tend the field.</span><ProfileMenu email={userEmail} displayName={displayName} avatarKey={avatarKey} onSignOut={onSignOut} onSaveProfile={onSaveProfile} /></div></header><div className="mx-auto max-w-[1180px] px-5 py-8 pb-24 md:px-10 md:py-12">{children}</div></main>
     <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-5 border-t border-[#DDD2C0] bg-[#EBE3D0]/95 px-1 py-2 backdrop-blur-lg md:hidden pb-safe">{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-medium transition-colors ${location === href ? "text-[#2D4C3C]" : "text-[#827264]"}`}><Icon size={18} strokeWidth={location === href ? 2.5 : 2} /><span>{label.split(" ")[0]}</span></Link>)}</nav>
   </div>;
 }
@@ -433,27 +507,29 @@ function GuidePage() {
       />
       <div className="w-full space-y-12">
         <section className="rounded-3xl border border-[#CDBD9D] bg-gradient-to-br from-[#EBE3D0] via-[#F5F1E9] to-white/70 p-6 shadow-md md:p-10">
-          <div className="space-y-9">
+          <div className="space-y-8">
             <div>
               <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Background</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A one-page method borrowed from problem-solving</h2>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">One page, one plan</h2>
               <p className="leading-relaxed text-[#5C4D43]">
-                This site is modeled after a common and effective engineering problem-solving approach called an <strong>A3</strong>. An A3 is meant to be a one-page layout and guide for solving a problem, and your <strong>Formation Plan</strong> is structured the same way: purpose, honest diagnosis, and concrete action, all on a single page you return to again and again.
+                This site borrows a simple method engineers use called an A3: one page, one plan, one problem at a time. Your <strong>Formation Plan</strong> works the same way.
               </p>
             </div>
             <div>
               <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Why</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A place to start a project focused on becoming holy</h2>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A place to grow in holiness</h2>
               <p className="leading-relaxed text-[#5C4D43]">
-                This website is meant to be a place for you to start a project focused on becoming holy. It helps you assess yourself and see what leads you short of holiness. Then it asks you to come up with ideas to combat these issues, and ultimately to put them into practice through action items, which show up on your <strong>Practices</strong> page. Every idea and action you come up with is tracked on your Formation Plan, so you can keep track and hold yourself accountable to complete it.
+                See where you fall short. Come up with real ways to change. Turn them into action items you can actually track on your <strong>Practices</strong> page.
               </p>
             </div>
             <div>
               <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">How</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">Three steps, all on one page</h2>
-              <p className="leading-relaxed text-[#5C4D43]">
-                Your Formation Plan has three parts, each detailed further below: <strong>I. Foundation</strong> (the Project Statement and Life Rationale) are fixed, because that is the purpose of this website and because we all fall short of holiness. <strong>II. Assessment & Strategy</strong> asks you to assess yourself, name the problems that hold you back from becoming holy, think through their root causes, and brainstorm countermeasures to combat them. <strong>III. Execution</strong> is where those countermeasures become actual action items you can do, daily, weekly, monthly, one time, or other, and which show up in your Practices tab.
-              </p>
+              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">Three simple steps</h2>
+              <ul className="space-y-2 text-[#5C4D43]">
+                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">I. Foundation</strong> — why this matters (the same for everyone)</li>
+                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">II. Assessment & Strategy</strong> — name your problems and plan your response</li>
+                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">III. Execution</strong> — turn your plan into daily action</li>
+              </ul>
             </div>
           </div>
         </section>
@@ -497,7 +573,7 @@ function GuidePage() {
           <div className="relative z-10">
             <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">I. Foundation</h2>
             <p className="text-[#5C4D43] leading-relaxed">
-              Every Formation Plan begins with the same unchanging reality: the universal call to holiness. We do not invent our own purpose; we receive it. The <strong>Project Statement</strong> and <strong>Life Rationale</strong> are fixed to remind us that holiness means being set apart for God and conforming our will to His. If you are married, this call extends explicitly to the sanctification of your spouse and children.
+              You're called to be holy — plain and simple. This part is fixed, because it's true for everyone. If you're married, that includes helping your spouse and kids grow in holiness too.
             </p>
           </div>
         </section>
@@ -505,7 +581,7 @@ function GuidePage() {
         <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-8 md:p-10 shadow-sm backdrop-blur">
           <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">II. Assessment & Strategy</h2>
           <p className="text-[#5C4D43] leading-relaxed mb-6">
-            Growth requires honest assessment. A <strong>problem</strong> is the gap between the holiness you are called to and your current reality. But fixing the symptom isn't enough, so name the <strong>root cause</strong> beneath it. Once you understand the root cause, brainstorm <strong>countermeasures</strong>: strategies, rules, or environmental changes that make the right behavior easier and the wrong behavior harder.
+            Be honest with yourself. What's the <strong>problem</strong>? Why does it keep happening (the <strong>root cause</strong>)? What will you actually do about it (a <strong>countermeasure</strong>)?
           </p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6">
@@ -513,20 +589,20 @@ function GuidePage() {
               <div className="space-y-4">
                 <div>
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Problem</p>
-                  <p className="text-sm text-[#5C4D43] leading-relaxed">I spend 2+ hours mindlessly scrolling on my phone every evening instead of praying, reading, or being present to my family.</p>
+                  <p className="text-sm text-[#5C4D43] leading-relaxed">I scroll my phone for hours every evening instead of praying or being with my family.</p>
                 </div>
                 <div>
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-1">The Root Cause</p>
-                  <p className="text-sm text-[#5C4D43] leading-relaxed">I am exhausted by the end of the day and seek numbing comfort rather than restorative rest. I keep the device in my pocket where it is frictionless to access.</p>
+                  <p className="text-sm text-[#5C4D43] leading-relaxed">I'm exhausted by evening, so I reach for numbing comfort instead of rest — and my phone is always within reach.</p>
                 </div>
               </div>
             </div>
             <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-6">
               <h3 className="font-bold text-[#2D4C3C] mb-3 text-sm flex items-center gap-2"><Target size={16}/> Example Countermeasures</h3>
               <ul className="list-disc list-inside text-sm text-[#5C4D43] leading-relaxed space-y-2 ml-2">
-                <li>Institute a "no phones in the bedroom or living room after 8 PM" rule.</li>
-                <li>Set up a charging station in the kitchen.</li>
-                <li>Place a spiritual reading book on the nightstand to replace the device.</li>
+                <li>No phones after 8 PM.</li>
+                <li>Charge it in the kitchen, not the bedroom.</li>
+                <li>Keep a good book on the nightstand instead.</li>
               </ul>
             </div>
           </div>
@@ -535,18 +611,18 @@ function GuidePage() {
         <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-8 md:p-10 shadow-sm backdrop-blur">
           <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-4">III. Execution</h2>
           <p className="text-[#5C4D43] leading-relaxed mb-6">
-            Countermeasures are theoretical until they become <strong>action items</strong>: specific, scheduled tasks or recurring habits. Choose a frequency for each one, daily, weekly, monthly, one time, or other, and it will show up in your <strong>Practices</strong> tab. Each action item's status is tracked for you rather than set by hand. Daily, weekly, and monthly items read <strong>In practice</strong>, since they're ongoing and tracked there. One-time and other items read <strong>Open</strong> until you check them off in Practices, then <strong>Complete</strong> or <strong>Missed</strong>, depending on how you marked them.
+            Turn each countermeasure into a real action, daily, weekly, monthly, one time, or other, and it shows up in your <strong>Practices</strong> tab. Recurring actions read <strong>In practice</strong>. One-time and other actions start <strong>Open</strong>, then become <strong>Complete</strong> or <strong>Missed</strong> once you check them off there.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
               <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">Example: One-time Action</p>
               <p className="text-sm text-[#5C4D43] font-medium mb-2">Buy an alarm clock for the bedroom.</p>
-              <p className="text-xs text-[#827264]">Shows as <strong>Open</strong> in your Formation Plan until you mark it Complete or Missed in Practices.</p>
+              <p className="text-xs text-[#827264]">Starts as <strong>Open</strong>, until you mark it Complete or Missed in Practices.</p>
             </div>
             <div className="rounded-2xl bg-[#F5F1E9] border border-[#DDD2C0] p-5">
               <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#8C6D23] mb-2">Example: Daily Action</p>
               <p className="text-sm text-[#5C4D43] font-medium mb-2">Plug phone into kitchen charger at 8 PM.</p>
-              <p className="text-xs text-[#827264]">Shows as <strong>In practice</strong>, and each day's check-in happens in your Practices tab.</p>
+              <p className="text-xs text-[#827264]">Shows as <strong>In practice</strong> — check it off each day in Practices.</p>
             </div>
           </div>
         </section>
@@ -554,7 +630,7 @@ function GuidePage() {
         <section className="rounded-3xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-8 md:p-10 shadow-xl text-[#F5F1E9]">
           <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#D4AF37]">An ongoing project</p>
           <p className="leading-relaxed text-[#D2E0D9]">
-            Continue to keep assessing yourself as time goes by, and come up with new problems as old ones are resolved. Add new action items and delete old ones, so your plan stays effective against your current problems. Keep yourself accountable with the Practices tab, and soon enough you will start closing the gap to holiness.
+            Keep reassessing as time goes on. Add new actions, drop what isn't working, and stay accountable with Practices. Little by little, you'll close the gap to holiness.
           </p>
         </section>
 
@@ -564,11 +640,8 @@ function GuidePage() {
           </div>
           <div className="relative z-10">
             <h2 className="font-serif text-2xl font-bold mb-4 text-[#8C6D23]">Also on this site: The Calling Log</h2>
-            <p className="text-[#5C4D43] leading-relaxed mb-6">
-              The Calling Log is a separate tool for prayerful discernment. Throughout life, you will perceive calls from God—nudges toward a vocation, a change in career, a specific apostolate, or a deep spiritual shift.
-            </p>
             <p className="text-[#5C4D43] leading-relaxed">
-              Instead of rushing to act or immediately dismissing these nudges, capture them in the log. Track them from <strong>Captured</strong> to <strong>Praying</strong>, and eventually to <strong>Confirmed</strong>, <strong>Acting</strong>, or <strong>Completed</strong>. This log ensures that the quiet voice of God is not drowned out by the noise of daily urgency.
+              A separate space for nudges you sense from God: a vocation, a change, a prompt to pray about something. Write it down, then track it from <strong>Captured</strong> to <strong>Praying</strong>, and on to <strong>Confirmed</strong>, <strong>Acting</strong>, or <strong>Completed</strong> — so it isn't lost in the noise of daily life.
             </p>
           </div>
         </section>
@@ -805,7 +878,7 @@ function A3Page({ store, setStore }: { store: Store; setStore: Dispatch<SetState
                       <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><CalendarDays size={13} className="text-[#8C6D23]" /> Starts {shortDate(action.startDate)}</p>
                       <p className="flex items-center gap-2 text-[11px] font-medium text-[#5C4D43]"><History size={13} className="text-[#8C6D23]" /> {frequencyLabels[action.frequency]}</p>
                     </div>
-                  </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4">{(() => { const derived = derivedActionStatus(action, store.completions); return <Pill tone={derived.tone}>{derived.label}</Pill>; })()}<div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
+                  </div><div className="flex items-center justify-between border-t border-[#EBE3D0] pt-4"><div className="flex items-center gap-1.5 flex-wrap">{(() => { const derived = derivedActionStatus(action, store.completions); return <Pill tone={derived.tone}>{derived.label}</Pill>; })()}{isRecurring(action) && (() => { const pct = actionMonthCompletion(action, store.completions, today.slice(0, 7)); return pct === null ? null : <span className="rounded-full bg-[#EBE3D0] border border-[#DDD2C0] px-2 py-0.5 font-mono text-[10px] font-bold text-[#8C6D23]">{pct}% this month</span>; })()}</div><div className="flex gap-1.5"><button onClick={() => openEditAction(action)} className="rounded-lg p-2 text-[#827264] hover:bg-black/5 hover:text-[#31231E] transition-colors"><Pencil size={15} /></button><button onClick={() => { if (!hasHistory(action.id) || confirm("This action has completion history. Deleting it will remove that history. Continue?")) removeAction(action.id); }} className="rounded-lg p-2 text-[#827264] hover:bg-[#FFF0F0] hover:text-[#DF3B32] transition-colors"><Trash2 size={15} /></button></div></div></div>)}</div>}
                 </div>
               );
             })}
@@ -1045,6 +1118,8 @@ export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [authUserEmail, setAuthUserEmail] = useState<string | null>(null);
+  const [authUserName, setAuthUserName] = useState<string | null>(null);
+  const [authUserAvatar, setAuthUserAvatar] = useState<string | null>(null);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1155,17 +1230,29 @@ export default function App() {
       setAuthed(!!session);
       setAuthUserId(session?.user.id ?? null);
       setAuthUserEmail(session?.user.email ?? null);
+      setAuthUserName(session?.user.user_metadata?.display_name ?? null);
+      setAuthUserAvatar(session?.user.user_metadata?.avatar_key ?? null);
       authAccessToken.current = session?.access_token ?? "";
     });
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((event, session) => {
       setAuthed(!!session);
       setAuthUserId(session?.user.id ?? null);
       setAuthUserEmail(session?.user.email ?? null);
+      setAuthUserName(session?.user.user_metadata?.display_name ?? null);
+      setAuthUserAvatar(session?.user.user_metadata?.avatar_key ?? null);
       authAccessToken.current = session?.access_token ?? "";
       if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
     }) ?? { data: { subscription: { unsubscribe: () => { } } } };
     return () => subscription.unsubscribe();
   }, []);
+
+  const saveProfile = async (name: string, avatar: string) => {
+    const result = await supabase?.auth.updateUser({ data: { display_name: name || null, avatar_key: avatar || null } });
+    if (!result || result.error) return false;
+    setAuthUserName(name || null);
+    setAuthUserAvatar(avatar || null);
+    return true;
+  };
 
   useEffect(() => {
     if (authed) {
@@ -1267,7 +1354,7 @@ export default function App() {
   if (authed === null || loading || !store) return <div className="grid min-h-[100dvh] place-items-center bg-[#F5F1E9] text-[#31231E] holy-pattern"><div className="flex flex-col items-center gap-4"><Mark /><p className="font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#827264] animate-pulse">Preparing workspace</p></div></div>;
   if (!authed) return <QueryClientProvider client={queryClient}><TooltipProvider><Login onAuthed={() => setAuthed(true)} /><Toaster /></TooltipProvider></QueryClientProvider>;
   if (recoveryMode) return <QueryClientProvider client={queryClient}><TooltipProvider><ResetPasswordPage onDone={() => setRecoveryMode(false)} /><Toaster /></TooltipProvider></QueryClientProvider>;
-  if (saveIssue) return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail}><div className="grid min-h-[60vh] place-items-center px-6"><div role="alert" className="max-w-lg rounded-3xl border border-[#CDBD9D] bg-[#FFF9E8] p-8 text-center shadow-xl"><ShieldCheck className="mx-auto text-[#8C6D23]" size={32} /><h1 className="mt-5 font-serif text-2xl font-bold text-[#31231E]">Saving paused to protect your data</h1><p className="mt-3 text-sm leading-relaxed text-[#5C4D43]">{saveIssue}</p><Button onClick={() => window.location.reload()} className="mt-6">Reload protected workspace</Button></div></div></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
+  if (saveIssue) return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail} displayName={authUserName} avatarKey={authUserAvatar} onSaveProfile={saveProfile}><div className="grid min-h-[60vh] place-items-center px-6"><div role="alert" className="max-w-lg rounded-3xl border border-[#CDBD9D] bg-[#FFF9E8] p-8 text-center shadow-xl"><ShieldCheck className="mx-auto text-[#8C6D23]" size={32} /><h1 className="mt-5 font-serif text-2xl font-bold text-[#31231E]">Saving paused to protect your data</h1><p className="mt-3 text-sm leading-relaxed text-[#5C4D43]">{saveIssue}</p><Button onClick={() => window.location.reload()} className="mt-6">Reload protected workspace</Button></div></div></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
 
-  return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail}><Switch><Route path="/"><DashboardHome store={store} /></Route><Route path="/dashboard"><DashboardHome store={store} /></Route><Route path="/guide"><GuidePage /></Route><Route path="/a3"><A3Page store={store} setStore={updateStore} /></Route><Route path="/leader-standard-work"><StandardWorkPage store={store} setStore={updateStore} /></Route><Route path="/calling-log"><CallingLogPage store={store} setStore={updateStore} /></Route><Route path="/settings"><SettingsPage /></Route><Route><div className="py-20 text-center"><h2 className="font-serif text-2xl font-bold text-[#31231E]">Page not found</h2><p className="mt-2 text-[#5C4D43]">The path you are looking for does not exist.</p><Link href="/dashboard" className="mt-6 inline-flex text-sm font-bold text-[#426553] hover:text-[#2D4C3C]">Return to dashboard</Link></div></Route></Switch></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><TooltipProvider><Shell onSignOut={handleSignOut} userEmail={authUserEmail} displayName={authUserName} avatarKey={authUserAvatar} onSaveProfile={saveProfile}><Switch><Route path="/"><DashboardHome store={store} /></Route><Route path="/dashboard"><DashboardHome store={store} /></Route><Route path="/guide"><GuidePage /></Route><Route path="/a3"><A3Page store={store} setStore={updateStore} /></Route><Route path="/leader-standard-work"><StandardWorkPage store={store} setStore={updateStore} /></Route><Route path="/calling-log"><CallingLogPage store={store} setStore={updateStore} /></Route><Route path="/settings"><SettingsPage /></Route><Route><div className="py-20 text-center"><h2 className="font-serif text-2xl font-bold text-[#31231E]">Page not found</h2><p className="mt-2 text-[#5C4D43]">The path you are looking for does not exist.</p><Link href="/dashboard" className="mt-6 inline-flex text-sm font-bold text-[#426553] hover:text-[#2D4C3C]">Return to dashboard</Link></div></Route></Switch></Shell><Toaster /></TooltipProvider></QueryClientProvider>;
 }
