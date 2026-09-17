@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type DragEvent, type FormEvent, type ReactNode, type SetStateAction } from "react";
+import { createPortal } from "react-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -329,7 +330,7 @@ function ProfileMenu({ email, displayName, avatarKey, onSignOut, onSaveProfile }
     <button onClick={openMenu} aria-label="Account menu" className="grid h-9 w-9 place-items-center rounded-full border border-[#DDD2C0] transition-colors hover:border-[#8C6D23]" style={{ background: headerAvatar?.bg ?? "#EBE3D0", color: headerAvatar?.fg ?? "#2D4C3C" }}>
       <HeaderIcon size={17} />
     </button>
-    {open && <div className="fixed inset-0 z-50 grid place-items-start justify-items-center overflow-y-auto bg-black/30 backdrop-blur-sm p-4 py-10" onClick={() => setOpen(false)}>
+    {open && createPortal(<div className="fixed inset-0 z-50 grid place-items-start justify-items-center overflow-y-auto bg-black/30 backdrop-blur-sm p-4 py-10" onClick={() => setOpen(false)}>
       <div className="w-full max-w-md rounded-3xl border border-[#DDD2C0] bg-[#F5F1E9] p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#DDD2C0] pb-4 mb-5">
           <h2 className="font-serif text-xl font-bold text-[#31231E]">Account</h2>
@@ -364,7 +365,7 @@ function ProfileMenu({ email, displayName, avatarKey, onSignOut, onSaveProfile }
           <button onClick={() => { setOpen(false); onSignOut(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#DF3B32] hover:bg-[#FFF0F0] transition-colors"><span className="flex items-center gap-3"><LogOut size={17} /> Sign out</span><ChevronRight size={15} /></button>
         </div>
       </div>
-    </div>}
+    </div>, document.body)}
   </div>;
 }
 
@@ -525,10 +526,10 @@ function GuidePage() {
             <div>
               <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">How</p>
               <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">Three simple steps</h2>
-              <ul className="space-y-2 text-[#5C4D43]">
-                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">I. Foundation</strong> — why this matters (the same for everyone)</li>
-                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">II. Assessment & Strategy</strong> — name your problems and plan your response</li>
-                <li className="flex gap-2"><strong className="shrink-0 text-[#2D4C3C]">III. Execution</strong> — turn your plan into daily action</li>
+              <ul className="space-y-4">
+                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">I. Foundation</p><p className="text-sm leading-relaxed text-[#5C4D43]">Why this matters — the same for everyone.</p></li>
+                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">II. Assessment & Strategy</p><p className="text-sm leading-relaxed text-[#5C4D43]">Name your problems and plan your response.</p></li>
+                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">III. Execution</p><p className="text-sm leading-relaxed text-[#5C4D43]">Turn your plan into daily action.</p></li>
               </ul>
             </div>
           </div>
