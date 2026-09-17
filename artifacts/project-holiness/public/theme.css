@@ -8,15 +8,10 @@
 [aria-label="Formation Plan process flow"] > div > div:nth-child(2) { min-width:0; max-width:100%; width:100%; box-sizing:border-box; overflow:hidden; }
 [aria-label="Formation Plan process flow"] > div > div:nth-child(2) > div { min-width:0; max-width:100%; box-sizing:border-box; }
 [aria-label="Formation Plan process flow"] > div > div:nth-child(2) > div > * { min-width:0; max-width:100%; box-sizing:border-box; }
-
-/* Keep the three countermeasure cards contained inside Section II. */
 [aria-label="Formation Plan process flow"] > div:nth-child(2) { overflow:hidden; }
-[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"],
-[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] { min-width:0; max-width:100%; box-sizing:border-box; }
-[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"] > *,
-[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] > * { min-width:0; max-width:100%; box-sizing:border-box; }
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"], [aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] { min-width:0; max-width:100%; box-sizing:border-box; }
+[aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="grid"] > *, [aria-label="Formation Plan process flow"] > div:nth-child(2) [class*="flex"] > * { min-width:0; max-width:100%; box-sizing:border-box; }
 
-/* Clean section-to-section connectors. */
 @media (min-width:1024px) {
   [aria-label="Formation Plan process flow"] > div:not(:last-child)::after { content:"→"; position:absolute; top:2.05rem; right:-1.18rem; z-index:5; width:2rem; height:2rem; display:grid; place-items:center; border:1px solid rgba(139,109,35,.32); border-radius:999px; background:#f5f1e9; color:#8c6d23; font:700 14px/1 Arial,sans-serif; box-shadow:0 2px 5px rgba(49,35,30,.08); }
 }
@@ -59,7 +54,7 @@ html[data-ph-theme] .bg-white\/60 { background-color:color-mix(in srgb,var(--ph-
 html[data-ph-theme] .bg-white\/70 { background-color:color-mix(in srgb,var(--ph-surface) 70%,transparent) !important; }
 html[data-ph-theme] .bg-white\/80 { background-color:color-mix(in srgb,var(--ph-surface) 80%,transparent) !important; }
 
-/* Remap Tailwind gradients so dark mode doesn't leave a pale layer under light text. */
+/* Remap gradients. The dark theme is intentionally left as-is below. */
 html[data-ph-theme="dark"] .bg-gradient-to-br { background-image:linear-gradient(to bottom right,#302e28,#171613) !important; }
 html[data-ph-theme="dark"] .bg-gradient-to-t { background-image:linear-gradient(to top,rgba(23,22,19,.98),rgba(23,22,19,.82),transparent) !important; }
 html[data-ph-theme="sage"] .bg-gradient-to-br { background-image:linear-gradient(to bottom right,#dce9df,#edf3ee) !important; }
@@ -80,21 +75,21 @@ html[data-ph-theme="blush"] { --ph-dark-panel:#603b46; --ph-dark-panel-text:#fff
 html[data-ph-theme="sky"] { --ph-dark-panel:#355766; --ph-dark-panel-text:#f3f8fa; }
 html[data-ph-theme="lavender"] { --ph-dark-panel:#4c405e; --ph-dark-panel-text:#f7f3fb; }
 html[data-ph-theme="butter"] { --ph-dark-panel:#5b5132; --ph-dark-panel-text:#fffaf0; }
-html[data-ph-theme="sage"] .bg-\[\#31231E\], html[data-ph-theme="sage"] .bg-\[\#2D4C3C\],
-html[data-ph-theme="blush"] .bg-\[\#31231E\], html[data-ph-theme="blush"] .bg-\[\#2D4C3C\"],
-html[data-ph-theme="sky"] .bg-\[\#31231E\], html[data-ph-theme="sky"] .bg-\[\#2D4C3C\],
-html[data-ph-theme="lavender"] .bg-\[\#31231E\], html[data-ph-theme="lavender"] .bg-\[\#2D4C3C\],
-html[data-ph-theme="butter"] .bg-\[\#31231E\], html[data-ph-theme="butter"] .bg-\[\#2D4C3C\] { background-color:var(--ph-dark-panel) !important; }
+
+/* The original dark green gradient is used for the Galatians card and the ongoing-project card. */
+html[data-ph-theme="sage"] .bg-gradient-to-br.from-\[\#2D4C3C\], html[data-ph-theme="sage"] [class*="from-[#2D4C3C]"] { background-image:linear-gradient(to bottom right,#304d3b,#243c2e) !important; }
+html[data-ph-theme="blush"] [class*="from-[#2D4C3C]"] { background-image:linear-gradient(to bottom right,#603b46,#4b2f38) !important; }
+html[data-ph-theme="sky"] [class*="from-[#2D4C3C]"] { background-image:linear-gradient(to bottom right,#355766,#294653) !important; }
+html[data-ph-theme="lavender"] [class*="from-[#2D4C3C]"] { background-image:linear-gradient(to bottom right,#4c405e,#3b314b) !important; }
+html[data-ph-theme="butter"] [class*="from-[#2D4C3C]"] { background-image:linear-gradient(to bottom right,#5b5132,#463e27) !important; }
+html[data-ph-theme="sage"] [class*="from-[#2D4C3C]"] *, html[data-ph-theme="blush"] [class*="from-[#2D4C3C]"] *, html[data-ph-theme="sky"] [class*="from-[#2D4C3C]"] *, html[data-ph-theme="lavender"] [class*="from-[#2D4C3C]"] *, html[data-ph-theme="butter"] [class*="from-[#2D4C3C]"] * { color:var(--ph-dark-panel-text) !important; }
+
+/* Any explicitly dark Tailwind blocks also stay dark outside the dark theme. */
 html[data-ph-theme="sage"] [class*="bg-gray-8"], html[data-ph-theme="sage"] [class*="bg-gray-9"], html[data-ph-theme="sage"] [class*="bg-slate-8"], html[data-ph-theme="sage"] [class*="bg-slate-9"], html[data-ph-theme="sage"] [class*="bg-zinc-8"], html[data-ph-theme="sage"] [class*="bg-zinc-9"],
 html[data-ph-theme="blush"] [class*="bg-gray-8"], html[data-ph-theme="blush"] [class*="bg-gray-9"], html[data-ph-theme="blush"] [class*="bg-slate-8"], html[data-ph-theme="blush"] [class*="bg-slate-9"], html[data-ph-theme="blush"] [class*="bg-zinc-8"], html[data-ph-theme="blush"] [class*="bg-zinc-9"],
 html[data-ph-theme="sky"] [class*="bg-gray-8"], html[data-ph-theme="sky"] [class*="bg-gray-9"], html[data-ph-theme="sky"] [class*="bg-slate-8"], html[data-ph-theme="sky"] [class*="bg-slate-9"], html[data-ph-theme="sky"] [class*="bg-zinc-8"], html[data-ph-theme="sky"] [class*="bg-zinc-9"],
 html[data-ph-theme="lavender"] [class*="bg-gray-8"], html[data-ph-theme="lavender"] [class*="bg-gray-9"], html[data-ph-theme="lavender"] [class*="bg-slate-8"], html[data-ph-theme="lavender"] [class*="bg-slate-9"], html[data-ph-theme="lavender"] [class*="bg-zinc-8"], html[data-ph-theme="lavender"] [class*="bg-zinc-9"],
 html[data-ph-theme="butter"] [class*="bg-gray-8"], html[data-ph-theme="butter"] [class*="bg-gray-9"], html[data-ph-theme="butter"] [class*="bg-slate-8"], html[data-ph-theme="butter"] [class*="bg-slate-9"], html[data-ph-theme="butter"] [class*="bg-zinc-8"], html[data-ph-theme="butter"] [class*="bg-zinc-9"] { background-color:var(--ph-dark-panel) !important; }
-html[data-ph-theme="sage"] .bg-\[\#31231E\] *, html[data-ph-theme="sage"] .bg-\[\#2D4C3C\] *,
-html[data-ph-theme="blush"] .bg-\[\#31231E\] *, html[data-ph-theme="blush"] .bg-\[\#2D4C3C\] *,
-html[data-ph-theme="sky"] .bg-\[\#31231E\] *, html[data-ph-theme="sky"] .bg-\[\#2D4C3C\] *,
-html[data-ph-theme="lavender"] .bg-\[\#31231E\] *, html[data-ph-theme="lavender"] .bg-\[\#2D4C3C\] *,
-html[data-ph-theme="butter"] .bg-\[\#31231E\] *, html[data-ph-theme="butter"] .bg-\[\#2D4C3C\] * { color:var(--ph-dark-panel-text) !important; }
 
 /* Dark stained-glass page headers: dark overlay + light type. */
 html[data-ph-theme="dark"] .bg-\[\#F5F1E9\] .mix-blend-multiply { opacity:.22 !important; }
