@@ -21,13 +21,25 @@
     window.dispatchEvent(new CustomEvent('project-holiness-theme-change', { detail: { theme: safeTheme, dark: !!dark } }));
   }
 
+  function isSettingsRoute() {
+    return /^\/settings\/?$/.test(window.location.pathname);
+  }
+
+  function removeAppearance() {
+    document.getElementById('ph-appearance')?.remove();
+  }
+
   const stored = getStored();
   applyTheme(stored.theme || 'classic', !!stored.dark);
 
   function mountSettings() {
-    if (location.pathname !== '/settings' || document.getElementById('ph-appearance')) return;
+    if (!isSettingsRoute()) {
+      removeAppearance();
+      return;
+    }
+    if (document.getElementById('ph-appearance')) return;
 
-    const heading = Array.from(document.querySelectorAll('h3')).find(el => el.textContent?.includes('Coming soon'));
+    const heading = Array.from(document.querySelectorAll('h3')).find(el => el.textContent?.trim() === 'Coming soon');
     const placeholder = heading?.closest('div.rounded-3xl');
     if (!placeholder) return;
 
@@ -85,9 +97,25 @@
     });
   }
 
+  /* The app is a client-side router, so watch both DOM changes and history navigation.
+     Appearance is deliberately mounted only on the real /settings route. */
+  const originalPushState = history.pushState;
+  history.pushState = function () {
+    const result = originalPushState.apply(this, arguments);
+    setTimeout(mountSettings, 0);
+    return result;
+  };
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function () {
+    const result = originalReplaceState.apply(this, arguments);
+    setTimeout(mountSettings, 0);
+    return result;
+  };
+
   const observer = new MutationObserver(mountSettings);
   observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener('popstate', mountSettings);
+  window.addEventListener('hashchange', mountSettings);
   window.addEventListener('project-holiness-theme-change', syncSettingsControls);
   document.addEventListener('DOMContentLoaded', mountSettings);
   setTimeout(mountSettings, 250);
