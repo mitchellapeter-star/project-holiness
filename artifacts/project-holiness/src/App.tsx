@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type DragEvent, type FormEvent, type ReactNode, type SetStateAction } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type DragEvent, type FormEvent, type ReactNode, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -655,61 +655,63 @@ function GuidePage() {
         description="Background, why, and how to use this website. Read this to orient your practice."
       />
       <div className="w-full space-y-12">
-        <section className="rounded-3xl border border-[#CDBD9D] bg-gradient-to-br from-[#EBE3D0] via-[#F5F1E9] to-white/70 p-6 shadow-md md:p-10">
-          <div className="space-y-8">
-            <div>
-              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Background</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">One page, one plan</h2>
-              <p className="leading-relaxed text-[#5C4D43]">
+                <section className="ph-guide-intro rounded-3xl border border-[#CDBD9D] bg-gradient-to-br from-[#EBE3D0] via-[#F5F1E9] to-white/70 p-6 shadow-md md:p-10">
+          <div className="space-y-7">
+            <div className="ph-guide-intro-item">
+              <p className="ph-guide-kicker">Background</p>
+              <h2 className="ph-guide-title">One page, one plan</h2>
+              <p className="ph-guide-copy">
                 This site borrows a simple method engineers use called an A3: one page, one plan, one problem at a time. Your <strong>Formation Plan</strong> works the same way.
               </p>
             </div>
-            <div>
-              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Why</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">A place to grow in holiness</h2>
-              <p className="leading-relaxed text-[#5C4D43]">
+            <div className="ph-guide-intro-item">
+              <p className="ph-guide-kicker">Why</p>
+              <h2 className="ph-guide-title">A place to grow in holiness</h2>
+              <p className="ph-guide-copy">
                 See where you fall short. Come up with real ways to change. Turn them into action items you can actually track on your <strong>Practices</strong> page.
               </p>
             </div>
-            <div>
-              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">How</p>
-              <h2 className="font-serif text-2xl font-bold text-[#31231E] mb-3">Three simple steps</h2>
-              <ul className="space-y-4">
-                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">I. Foundation</p><p className="text-sm leading-relaxed text-[#5C4D43]">Why this matters — the same for everyone.</p></li>
-                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">II. Assessment & Strategy</p><p className="text-sm leading-relaxed text-[#5C4D43]">Name your problems and plan your response.</p></li>
-                <li><p className="font-serif text-base font-bold text-[#2D4C3C]">III. Execution</p><p className="text-sm leading-relaxed text-[#5C4D43]">Turn your plan into daily action.</p></li>
+            <div className="ph-guide-intro-item">
+              <p className="ph-guide-kicker">How</p>
+              <h2 className="ph-guide-title">Three simple steps</h2>
+              <ul className="ph-guide-how-list">
+                <li><span>I. Foundation</span><p>Why this matters — the same for everyone.</p></li>
+                <li><span>II. Assessment & Strategy</span><p>Name your problems and plan your response.</p></li>
+                <li><span>III. Execution</span><p>Turn your plan into daily action.</p></li>
               </ul>
+              <p className="mt-4 text-xs font-medium text-[#827264]">See below for a breakdown of these steps.</p>
             </div>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#DDD2C0] bg-white/40 p-6 shadow-sm backdrop-blur md:p-8">
-          <p className="mb-5 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">At a glance</p>
-          <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:gap-6" aria-label="Formation Plan process flow">
+                <section className="ph-guide-overview rounded-3xl border border-[#DDD2C0] bg-white/40 p-6 shadow-sm backdrop-blur md:p-8">
+          <div className="ph-guide-overview-heading">
+            <div>
+              <p className="ph-guide-overview-label font-mono font-bold uppercase tracking-[.2em]">At a glance</p>
+              <p className="ph-guide-overview-subtitle">The seven-part path from your calling to the practices you live.</p>
+            </div>
+          </div>
+
+          <div className="ph-guide-stage-grid" aria-label="Formation Plan overview">
             {a3Groups.map((group, groupIndex) => {
               const stepsBefore = a3Groups.slice(0, groupIndex).reduce((sum, g) => sum + g.steps.length, 0);
               return (
-                <div key={group.section} className="flex-1">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#CDBD9D] bg-[#EBE3D0] px-3 py-1.5">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#8C6D23]">{group.section}</span>
-                  </div>
-                  <div className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:gap-1.5">
+                <article key={group.section} className="ph-guide-stage">
+                  <header className="ph-guide-stage-header">
+                    <span className="ph-guide-stage-number">{group.section}</span>
+                  </header>
+                  <ol className="ph-guide-stage-list">
                     {group.steps.map((step, stepIndex) => (
-                      <div key={step.label} className="contents">
-                        <div className="flex min-h-[104px] flex-1 flex-col justify-center rounded-2xl border border-[#DDD2C0] bg-white/75 px-4 py-4 shadow-sm">
-                          <span className="mb-2 font-mono text-[9px] font-bold uppercase tracking-widest text-[#8C6D23]">Step {stepsBefore + stepIndex + 1}</span>
-                          <strong className="font-serif text-base leading-tight text-[#2D4C3C]">{step.label}</strong>
-                          <span className="mt-1.5 text-xs leading-relaxed text-[#827264]">{step.detail}</span>
+                      <li key={step.label} className="ph-guide-stage-item">
+                        <span className="ph-guide-stage-step-number">Step {stepsBefore + stepIndex + 1}</span>
+                        <div className="ph-guide-stage-content">
+                          <h3>{step.label}</h3>
+                          <p>{step.detail}</p>
                         </div>
-                        {stepIndex < group.steps.length - 1 && (
-                          <div className="flex h-7 shrink-0 items-center justify-center text-[#8C6D23] lg:h-auto lg:w-5" aria-hidden="true">
-                            <ArrowRight size={18} className="rotate-90 lg:rotate-0" />
-                          </div>
-                        )}
-                      </div>
+                      </li>
                     ))}
-                  </div>
-                </div>
+                  </ol>
+                </article>
               );
             })}
           </div>
@@ -779,7 +781,7 @@ function GuidePage() {
         <section className="rounded-3xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-8 md:p-10 shadow-xl text-[#F5F1E9]">
           <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#D4AF37]">An ongoing project</p>
           <p className="leading-relaxed text-[#D2E0D9]">
-            Keep reassessing as time goes on. Add new actions, drop what isn't working, and stay accountable with Practices. Little by little, you'll close the gap to holiness.
+            Keep reassessing as time goes on. Add new actions, drop what isn't working, and stay accountable with <Link href="/leader-standard-work" className="font-bold text-[#D4AF37] underline decoration-[#D4AF37]/50 underline-offset-2 hover:text-[#F0D56A]">Practices</Link>. Little by little, you'll close the gap to holiness.
           </p>
         </section>
 
