@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type DragEvent, type FormEvent, type ReactNode, type SetStateAction } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type Dispatch, type DragEvent, type FormEvent, type ReactNode, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -685,7 +685,7 @@ function GuidePage() {
                   </div>
                   <div className={`ph-guide-flow-steps ph-guide-flow-steps-${group.steps.length}`}>
                     {group.steps.map((step, stepIndex) => (
-                      <React.Fragment key={step.label}>
+                      <Fragment key={step.label}>
                         <div className="ph-guide-flow-step">
                           <span className="ph-guide-flow-step-number">Step {stepsBefore + stepIndex + 1}</span>
                           <strong>{step.label}</strong>
@@ -696,7 +696,7 @@ function GuidePage() {
                             <ArrowRight size={17} strokeWidth={2.2} />
                           </div>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                   </div>
                 </div>
