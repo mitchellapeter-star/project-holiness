@@ -685,10 +685,10 @@ function GuidePage() {
                   </div>
                   <div className={`ph-guide-flow-steps ph-guide-flow-steps-${group.steps.length}`}>
                     {group.steps.map((step, stepIndex) => (
-                      <div key={step.label} className="contents">
+                      <React.Fragment key={step.label}>
                         <div className="ph-guide-flow-step">
-                          <span className="ph-guide-flow-step-number font-mono font-bold uppercase tracking-widest">Step {stepsBefore + stepIndex + 1}</span>
-                          <strong className="font-serif">{step.label}</strong>
+                          <span className="ph-guide-flow-step-number">Step {stepsBefore + stepIndex + 1}</span>
+                          <strong>{step.label}</strong>
                           <span>{step.detail}</span>
                         </div>
                         {stepIndex < group.steps.length - 1 && (
@@ -696,7 +696,7 @@ function GuidePage() {
                             <ArrowRight size={17} strokeWidth={2.2} />
                           </div>
                         )}
-                      </div>
+                      </React.Fragment>
                     ))}
                   </div>
                 </div>
