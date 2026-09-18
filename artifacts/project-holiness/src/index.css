@@ -403,92 +403,59 @@ button:active { transform: translateY(1px); }
   letter-spacing:-.02em; color:#251B17;
 }
 .ph-guide-copy { max-width:72rem; color:#4B3D35; font-size:.93rem; line-height:1.65; }
-.ph-guide-how-list { display:grid; gap:8px; margin:12px 0 0; padding:0; list-style:none; }
-.ph-guide-how-list li { display:grid; grid-template-columns:minmax(185px,max-content) 1fr; gap:14px; align-items:baseline; min-width:0; }
-.ph-guide-how-list li span { font-family:'Libre Baskerville',serif; font-size:.9rem; font-weight:700; color:#294D3D; }
-.ph-guide-how-list li p { margin:0; color:#54463E; font-size:.84rem; line-height:1.45; }
-
-.ph-guide-overview-heading {
-  display:flex; align-items:end; justify-content:space-between;
-  gap:18px; margin-bottom:18px;
+.ph-guide-how-list { display:grid; gap:11px; margin:13px 0 0; padding:0; list-style:none; }
+.ph-guide-how-list li { display:block; min-width:0; }
+.ph-guide-how-list li span {
+  display:block; margin-bottom:3px; font-family:'Libre Baskerville',serif;
+  font-size:.92rem; font-weight:700; line-height:1.3; color:#294D3D;
 }
+.ph-guide-how-list li p {
+  margin:0; padding-left:18px; color:#54463E; font-size:.84rem; line-height:1.45;
+}
+
+.ph-guide-overview-heading { margin-bottom:20px; }
 .ph-guide-overview-label { margin:0; color:#6D5010; font-size:12px; line-height:1; letter-spacing:.2em; }
-.ph-guide-overview-subtitle { margin:0; color:#65564C; font-size:.78rem; line-height:1.4; text-align:right; }
+.ph-guide-overview-subtitle { margin:8px 0 0; color:#65564C; font-size:.8rem; line-height:1.45; }
 
-.ph-guide-flow {
-  display:grid;
-  grid-template-columns:minmax(0,.9fr) minmax(0,1.8fr) minmax(0,.9fr);
-  gap:20px; width:100%; min-width:0; align-items:stretch;
+.ph-guide-stage-grid {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px;
+  width:100%; min-width:0; align-items:stretch;
 }
-.ph-guide-flow-group {
-  position:relative; min-width:0; width:100%; padding:14px;
-  border:1px solid #DDD2C0; border-radius:20px; background:rgba(255,255,255,.3);
-  box-sizing:border-box;
+.ph-guide-stage {
+  min-width:0; width:100%; box-sizing:border-box; padding:14px;
+  border:1px solid #DDD2C0; border-radius:20px; background:rgba(255,255,255,.34);
 }
-.ph-guide-flow-group + .ph-guide-flow-group::before {
-  content:''; position:absolute; left:-20px; top:50%; width:19px; height:1px; background:#C5B589;
-}
-.ph-guide-flow-group + .ph-guide-flow-group::after {
-  content:'→'; position:absolute; left:-34px; top:calc(50% - 14px);
-  display:grid; width:28px; height:28px; place-items:center;
-  border:1px solid #C5B589; border-radius:50%; background:#F5F1E9;
-  color:#7A5C17; font-size:14px; font-weight:700;
-}
-
-.ph-guide-flow-heading {
+.ph-guide-stage-header {
   display:flex; align-items:center; justify-content:center;
-  min-height:37px; margin-bottom:12px; padding:6px 10px;
-  border:1px solid #CDBD9D; border-radius:999px; background:#EBE3D0;
-  color:#6D5010; font-size:10px; line-height:1.25; text-align:center;
+  min-height:42px; margin-bottom:14px; padding:7px 12px;
+  border:1px solid #C6B37F; border-radius:12px; background:#EBE3D0;
 }
-.ph-guide-flow-steps {
-  display:flex; flex-flow:row nowrap; align-items:stretch; gap:8px;
-  width:100%; min-width:0;
+.ph-guide-stage-number {
+  color:#5F4610; font-family:'DM Mono',monospace; font-size:10px;
+  font-weight:700; line-height:1.25; letter-spacing:.16em; text-align:center;
+  text-transform:uppercase;
 }
-.ph-guide-flow-step {
-  display:flex !important; flex:1 1 0; flex-direction:column !important;
-  align-items:stretch; justify-content:flex-start;
-  min-width:0; width:0; min-height:158px; box-sizing:border-box;
-  overflow:hidden; padding:14px 13px;
-  border:1px solid #DDD2C0; border-radius:16px; background:rgba(255,255,255,.9);
-  box-shadow:0 2px 5px rgba(75,55,35,.07);
+.ph-guide-stage-steps { display:grid; gap:10px; min-width:0; }
+.ph-guide-stage-step {
+  min-width:0; padding:13px 14px; box-sizing:border-box;
+  border:1px solid #E0D6C6; border-radius:14px; background:#FFFDFC;
 }
-.ph-guide-flow-step-number {
-  display:block !important; flex:0 0 auto; width:100%;
-  margin:0 0 10px; color:#7A5C17;
+.ph-guide-stage-step-number {
+  display:block; margin:0 0 6px; color:#80631E;
   font-family:'DM Mono',monospace; font-size:9px; font-weight:700;
   line-height:1; letter-spacing:.14em; text-transform:uppercase;
-  white-space:nowrap;
 }
-.ph-guide-flow-step strong {
-  display:block !important; flex:0 0 auto; min-width:0; width:100%;
-  margin:0; color:#294D3D; font-family:'Libre Baskerville',serif;
-  font-size:13px; font-weight:700; line-height:1.25;
-  overflow-wrap:normal; word-break:normal; hyphens:none;
+.ph-guide-stage-step h3 {
+  margin:0 0 5px; color:#294D3D; font-family:'Libre Baskerville',serif;
+  font-size:14px; font-weight:700; line-height:1.3; overflow-wrap:normal;
+  word-break:normal; hyphens:none;
 }
-.ph-guide-flow-step > span:last-child {
-  display:block !important; flex:0 0 auto; min-width:0; width:100%;
-  margin-top:7px; color:#66574D; font-size:10.5px; line-height:1.45;
-  overflow-wrap:normal; word-break:normal;
+.ph-guide-stage-step p {
+  margin:0; color:#5F5148; font-size:11px; line-height:1.5;
 }
-.ph-guide-flow-arrow {
-  display:grid; flex:0 0 22px; width:22px; min-width:22px; height:22px;
-  place-items:center; align-self:center; color:#8A681D;
-}
-
-@media (max-width:1100px) and (min-width:769px) {
-  .ph-guide-flow { grid-template-columns:1fr; }
-  .ph-guide-flow-group + .ph-guide-flow-group::before,
-  .ph-guide-flow-group + .ph-guide-flow-group::after { display:none; }
+@media (max-width:900px) {
+  .ph-guide-stage-grid { grid-template-columns:1fr; }
 }
 @media (max-width:768px) {
-  .ph-guide-overview-heading { display:block; }
-  .ph-guide-overview-subtitle { margin-top:8px; text-align:left; }
-  .ph-guide-how-list li { grid-template-columns:1fr; gap:2px; }
-  .ph-guide-flow { grid-template-columns:1fr; gap:18px; }
-  .ph-guide-flow-group + .ph-guide-flow-group::before,
-  .ph-guide-flow-group + .ph-guide-flow-group::after { display:none; }
-  .ph-guide-flow-steps { flex-direction:column; gap:8px; }
-  .ph-guide-flow-arrow { flex:0 0 22px; width:100%; height:22px; transform:rotate(90deg); }
-  .ph-guide-flow-step { width:100%; min-height:0; }
+  .ph-guide-how-list li p { padding-left:12px; }
 }
