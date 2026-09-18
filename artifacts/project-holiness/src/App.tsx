@@ -665,6 +665,7 @@ function GuidePage() {
                 <li><span>II. Assessment & Strategy</span><p>Name your problems and plan your response.</p></li>
                 <li><span>III. Execution</span><p>Turn your plan into daily action.</p></li>
               </ul>
+              <p className="mt-4 text-xs font-medium text-[#827264]">See below for a breakdown of these steps.</p>
             </div>
           </div>
         </section>
