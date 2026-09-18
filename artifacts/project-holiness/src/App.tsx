@@ -671,35 +671,30 @@ function GuidePage() {
 
                 <section className="ph-guide-overview rounded-3xl border border-[#DDD2C0] bg-white/40 p-6 shadow-sm backdrop-blur md:p-8">
           <div className="ph-guide-overview-heading">
-            <p className="ph-guide-overview-label font-mono font-bold uppercase tracking-[.2em]">At a glance</p>
-            <p className="ph-guide-overview-subtitle">The seven-part path from your calling to the practices you live.</p>
+            <div>
+              <p className="ph-guide-overview-label font-mono font-bold uppercase tracking-[.2em]">At a glance</p>
+              <p className="ph-guide-overview-subtitle">The seven-part path from your calling to the practices you live.</p>
+            </div>
           </div>
 
-          <div className="ph-guide-flow" aria-label="Formation Plan process flow">
+          <div className="ph-guide-stage-grid" aria-label="Formation Plan overview">
             {a3Groups.map((group, groupIndex) => {
               const stepsBefore = a3Groups.slice(0, groupIndex).reduce((sum, g) => sum + g.steps.length, 0);
               return (
-                <div key={group.section} className={`ph-guide-flow-group ph-guide-flow-group-${group.steps.length}`}>
-                  <div className="ph-guide-flow-heading">
-                    <span className="font-mono font-bold uppercase tracking-widest">{group.section}</span>
-                  </div>
-                  <div className={`ph-guide-flow-steps ph-guide-flow-steps-${group.steps.length}`}>
+                <article key={group.section} className="ph-guide-stage">
+                  <header className="ph-guide-stage-header">
+                    <span className="ph-guide-stage-number">{group.section}</span>
+                  </header>
+                  <div className="ph-guide-stage-steps">
                     {group.steps.map((step, stepIndex) => (
-                      <Fragment key={step.label}>
-                        <div className="ph-guide-flow-step">
-                          <span className="ph-guide-flow-step-number">Step {stepsBefore + stepIndex + 1}</span>
-                          <strong>{step.label}</strong>
-                          <span>{step.detail}</span>
-                        </div>
-                        {stepIndex < group.steps.length - 1 && (
-                          <div className="ph-guide-flow-arrow" aria-hidden="true">
-                            <ArrowRight size={17} strokeWidth={2.2} />
-                          </div>
-                        )}
-                      </Fragment>
+                      <div key={step.label} className="ph-guide-stage-step">
+                        <span className="ph-guide-stage-step-number">Step {stepsBefore + stepIndex + 1}</span>
+                        <h3>{step.label}</h3>
+                        <p>{step.detail}</p>
+                      </div>
                     ))}
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
