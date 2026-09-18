@@ -685,15 +685,17 @@ function GuidePage() {
                   <header className="ph-guide-stage-header">
                     <span className="ph-guide-stage-number">{group.section}</span>
                   </header>
-                  <div className="ph-guide-stage-steps">
+                  <ol className="ph-guide-stage-list">
                     {group.steps.map((step, stepIndex) => (
-                      <div key={step.label} className="ph-guide-stage-step">
+                      <li key={step.label} className="ph-guide-stage-item">
                         <span className="ph-guide-stage-step-number">Step {stepsBefore + stepIndex + 1}</span>
-                        <h3>{step.label}</h3>
-                        <p>{step.detail}</p>
-                      </div>
+                        <div className="ph-guide-stage-content">
+                          <h3>{step.label}</h3>
+                          <p>{step.detail}</p>
+                        </div>
+                      </li>
                     ))}
-                  </div>
+                  </ol>
                 </article>
               );
             })}
