@@ -767,7 +767,7 @@ function GuidePage() {
         <section className="rounded-3xl bg-gradient-to-br from-[#2D4C3C] to-[#1A3326] p-8 md:p-10 shadow-xl text-[#F5F1E9]">
           <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#D4AF37]">An ongoing project</p>
           <p className="leading-relaxed text-[#D2E0D9]">
-            Keep reassessing as time goes on. Add new actions, drop what isn't working, and stay accountable with Practices. Little by little, you'll close the gap to holiness.
+            Keep reassessing as time goes on. Add new actions, drop what isn't working, and stay accountable with <Link href="/leader-standard-work" className="font-bold text-[#D4AF37] underline decoration-[#D4AF37]/50 underline-offset-2 hover:text-[#F0D56A]">Practices</Link>. Little by little, you'll close the gap to holiness.
           </p>
         </section>
 
