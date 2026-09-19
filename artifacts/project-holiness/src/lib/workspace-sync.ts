@@ -87,7 +87,7 @@ export async function loadWorkspace(): Promise<WorkspaceSnapshot | null> {
         id: String(item.id),
         actionItemId: String(item.action_item_id),
         completionPeriod: String(item.completion_period),
-        status: item.status === "missed" ? "missed" : "completed",
+        status: item.status === "missed" ? "missed" : item.status === "canceled" ? "canceled" : "completed",
         completedAt: String(item.completed_at),
       })),
       disciplines: disciplines.map(item => ({

@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import {
   ArrowRight, BookOpen, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight,
   Circle, ClipboardCheck, Cross, GripVertical, History, Menu, Pencil, Plus, Target, Trash2, X, AlertCircle, Bookmark, Compass, ChevronDown, ChevronUp, ShieldCheck, User, Settings, LogOut,
-  Heart, Star, Shield, Key, Bird, Flame, Flower2, Anchor, Sun
+  Heart, Star, Shield, Key, Bird, Flame, Flower2, Anchor, Sun, Ban
 } from "lucide-react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
@@ -224,8 +224,9 @@ function completionFor(completions: ActionCompletion[], actionId: string, period
 
 // Percentage of this month's planned occurrences marked complete. Only meaningful for
 // recurring (daily/weekly/monthly) actions; returns null when there's nothing planned this month.
+// Canceled occurrences don't count for or against the person, so they're excluded entirely.
 function actionMonthCompletion(action: ActionItem, completions: ActionCompletion[], month: string): number | null {
-  const periods = periodsForAction(action, month);
+  const periods = periodsForAction(action, month).filter(period => completionFor(completions, action.id, period) !== "canceled");
   if (periods.length === 0) return null;
   const completedCount = periods.filter(period => completionFor(completions, action.id, period) === "completed").length;
   return Math.round((completedCount / periods.length) * 100);
@@ -233,23 +234,35 @@ function actionMonthCompletion(action: ActionItem, completions: ActionCompletion
 
 // Derives a display status for an action item instead of relying on a manually set field.
 // Recurring items (daily/weekly/monthly) are tracked ongoing in Practices, so they read "In practice."
-// One-time/other items reflect their single completion record: Open, Complete, or Missed.
+// One-time/other items reflect their single completion record: Open, Complete, Missed, or Canceled.
 function derivedActionStatus(action: ActionItem, completions: ActionCompletion[]): { label: string; tone: "green" | "gold" | "neutral" | "red" } {
   if (isRecurring(action)) return { label: "In practice", tone: "gold" };
   const period = action.dueDate || action.startDate || today;
   const status = completionFor(completions, action.id, period);
   if (status === "completed") return { label: "Complete", tone: "green" };
   if (status === "missed") return { label: "Missed", tone: "red" };
+  if (status === "canceled") return { label: "Canceled", tone: "neutral" };
   return { label: "Open", tone: "neutral" };
 }
 
+// Canceled occurrences are excluded from both planned and actual — they don't count for or
+// against the person, as if that occurrence had never been scheduled.
 function completionTotals(actions: ActionItem[], completions: ActionCompletion[], month: string) {
-  const plannedKeys = new Set(actions.flatMap(action => periodsForAction(action, month).map(period => `${action.id}|${period}`)));
-  const actual = completions.filter(completion => completion.status === "completed" && plannedKeys.has(`${completion.actionItemId}|${completion.completionPeriod}`)).length;
-  return { planned: plannedKeys.size, actual };
+  let planned = 0;
+  let actual = 0;
+  for (const action of actions) {
+    for (const period of periodsForAction(action, month)) {
+      const status = completionFor(completions, action.id, period);
+      if (status === "canceled") continue;
+      planned++;
+      if (status === "completed") actual++;
+    }
+  }
+  return { planned, actual };
 }
 
-// Cycles a practice through three states with each click: unmarked -> completed -> missed -> unmarked.
+// Cycles a practice through four states with each click: unmarked -> completed -> missed ->
+// canceled -> unmarked. Canceled occurrences are excluded from planned/actual totals entirely.
 function cycleCompletion(setStore: Dispatch<SetStateAction<Store>>, action: ActionItem, period: string) {
   setStore(current => {
     const existingIndex = current.completions.findIndex(item => item.actionItemId === action.id && item.completionPeriod === period);
@@ -271,6 +284,12 @@ function cycleCompletion(setStore: Dispatch<SetStateAction<Store>>, action: Acti
       return {
         ...current,
         completions: current.completions.map((item, index) => index === existingIndex ? { ...item, status: "missed", completedAt: new Date().toISOString() } : item),
+      };
+    }
+    if (existing.status === "missed") {
+      return {
+        ...current,
+        completions: current.completions.map((item, index) => index === existingIndex ? { ...item, status: "canceled", completedAt: new Date().toISOString() } : item),
       };
     }
     return { ...current, completions: current.completions.filter((_, index) => index !== existingIndex) };
@@ -1163,13 +1182,13 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
                   <GripVertical size={17} className="shrink-0 cursor-grab text-[#A79682]" />
                   <button
                     onClick={() => cycleCompletion(setStore, action, period)}
-                    aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Clear status for" : "Mark complete"} ${action.title}`}
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0]" : "border-[#CDBD9D] bg-white text-transparent hover:border-[#827264]"}`}
+                    aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Mark as canceled" : status === "canceled" ? "Clear status for" : "Mark complete"} ${action.title}`}
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0]" : status === "canceled" ? "border-[#31231E] bg-[#31231E] text-[#F5F1E9]" : "border-[#CDBD9D] bg-white text-transparent hover:border-[#827264]"}`}
                   >
-                    {status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}
+                    {status === "missed" ? <X size={14} strokeWidth={3} /> : status === "canceled" ? <Ban size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}
                   </button>
                   <div className="min-w-0 flex-1">
-                    <p className={`font-medium text-[#31231E] ${status === "completed" ? "line-through opacity-55" : ""}`}>{action.title}</p>
+                    <p className={`font-medium text-[#31231E] ${status === "completed" ? "line-through opacity-55" : ""} ${status === "canceled" ? "opacity-55" : ""}`}>{action.title}</p>
                     {(action.dueDate || action.description) && <p className="mt-1 text-xs text-[#827264]">{action.dueDate ? `Due ${shortDate(action.dueDate)}` : action.description}</p>}
                   </div>
                   <div className="flex shrink-0 md:hidden">
@@ -1178,6 +1197,7 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
                   </div>
                   {status === "completed" && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#426553]">Completed</span>}
                   {status === "missed" && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#DF3B32]">Missed</span>}
+                  {status === "canceled" && <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#827264]">Canceled</span>}
                 </div>
               );
             })}
@@ -1191,11 +1211,13 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
     <PageHeader eyebrow="Practices" title="The daily field." description="A generated view of your commitments based on your Formation Plan." action={<div className="flex items-center justify-between gap-4 rounded-xl border border-[#DDD2C0] bg-white/70 p-1.5 shadow-sm"><Button variant="ghost" onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft size={16} /></Button><span className="min-w-[120px] text-center font-mono text-[11px] font-bold uppercase tracking-widest text-[#5C4D43]">{monthLabel(month)}</span><Button variant="ghost" onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight size={16} /></Button></div>} />
     <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl border border-[#DDD2C0] bg-white/60 px-4 py-3 text-xs text-[#5C4D43] backdrop-blur">
       <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#8C6D23]">How to mark a practice</span>
-      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#DDD2C0] bg-[#F5F1E9]" /> Click once for not marked</span>
+      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#DDD2C0] bg-[#F5F1E9]" /> Not marked (default)</span>
       <ArrowRight size={12} className="text-[#827264]" />
       <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9]"><Check size={12} strokeWidth={3} /></span> Done</span>
       <ArrowRight size={12} className="text-[#827264]" />
       <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0]"><X size={12} strokeWidth={3} /></span> Missed</span>
+      <ArrowRight size={12} className="text-[#827264]" />
+      <span className="flex items-center gap-1.5"><span className="grid h-5 w-5 place-items-center rounded-md border border-[#31231E] bg-[#31231E] text-[#F5F1E9]"><Ban size={12} strokeWidth={3} /></span> Canceled — doesn't count for or against you</span>
       <ArrowRight size={12} className="text-[#827264]" />
       <span>back to not marked</span>
     </div>
@@ -1223,19 +1245,19 @@ function StandardWorkPage({ store, setStore }: { store: Store; setStore: Dispatc
             {actions.filter(action => action.frequency === "daily").map(action => <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}{dates.map(date => {
               const isPlanned = periodsForAction(action, month).includes(date);
               const status = completionFor(store.completions, action.id, date);
-              return <td key={date} className="px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, date)} aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Clear status for" : "Mark complete"} ${action.title} on ${shortDate(date)}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-[#DDD2C0]" />}</td>;
+              return <td key={date} className="px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, date)} aria-label={`${status === "completed" ? "Mark as missed" : status === "missed" ? "Mark as canceled" : status === "canceled" ? "Clear status for" : "Mark complete"} ${action.title} on ${shortDate(date)}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : status === "canceled" ? "border-[#31231E] bg-[#31231E] text-[#F5F1E9] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : status === "canceled" ? <Ban size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-[#DDD2C0]" />}</td>;
             })}</tr>)}
             <tr className="bg-black/5"><td colSpan={dates.length + 1} className="px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Weekly · one check per calendar week</td></tr>
             {actions.filter(action => action.frequency === "weekly").map(action => <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}{weekGroups.map(week => {
               const isPlanned = periodsForAction(action, month).includes(week.start);
               const status = completionFor(store.completions, action.id, week.start);
-              return <td key={week.start} colSpan={week.dates.length} className="border-l border-[#DDD2C0] px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, week.start)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Clear status for" : "Mark complete for"} ${action.title} for the week of ${shortDate(week.dates[0])}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-transparent" />}</td>;
+              return <td key={week.start} colSpan={week.dates.length} className="border-l border-[#DDD2C0] px-1 py-3 text-center">{isPlanned ? <button onClick={() => toggleCalendarCompletion(action, week.start)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Mark as canceled for" : status === "canceled" ? "Clear status for" : "Mark complete for"} ${action.title} for the week of ${shortDate(week.dates[0])}`} className={`mx-auto grid h-7 w-7 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : status === "canceled" ? "border-[#31231E] bg-[#31231E] text-[#F5F1E9] shadow-sm" : "border-[#DDD2C0] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={14} strokeWidth={3} /> : status === "canceled" ? <Ban size={14} strokeWidth={3} /> : <Check size={14} strokeWidth={3} />}</button> : <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-transparent" />}</td>;
             })}</tr>)}
             <tr className="bg-black/5"><td colSpan={dates.length + 1} className="px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-[#8C6D23]">Monthly · one check for the month</td></tr>
             {actions.filter(action => action.frequency === "monthly").map(action => {
               const period = periodsForAction(action, month)[0];
               const status = period ? completionFor(store.completions, action.id, period) : undefined;
-              return <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}<td colSpan={dates.length} className="border-l border-[#DDD2C0] px-3 py-3 text-center">{period ? <button onClick={() => toggleCalendarCompletion(action, period)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Clear status for" : "Mark complete for"} ${action.title} for ${monthLabel(month)}`} className={`mx-auto grid h-8 w-8 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : "border-[#CDBD9D] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={15} strokeWidth={3} /> : <Check size={15} strokeWidth={3} />}</button> : <span className="text-xs text-[#827264]">Not active this month</span>}</td></tr>;
+              return <tr key={action.id} {...dragProps(action)} className={`transition-colors hover:bg-black/5 ${draggedId === action.id ? "bg-[#EBE3D0] opacity-60" : ""}`}>{practiceCell(action)}<td colSpan={dates.length} className="border-l border-[#DDD2C0] px-3 py-3 text-center">{period ? <button onClick={() => toggleCalendarCompletion(action, period)} aria-label={`${status === "completed" ? "Mark as missed for" : status === "missed" ? "Mark as canceled for" : status === "canceled" ? "Clear status for" : "Mark complete for"} ${action.title} for ${monthLabel(month)}`} className={`mx-auto grid h-8 w-8 place-items-center rounded-lg border transition-all check-pop ${status === "completed" ? "border-[#2D4C3C] bg-[#2D4C3C] text-[#F5F1E9] shadow-sm" : status === "missed" ? "border-[#DF3B32] bg-[#DF3B32] text-[#FFF0F0] shadow-sm" : status === "canceled" ? "border-[#31231E] bg-[#31231E] text-[#F5F1E9] shadow-sm" : "border-[#CDBD9D] bg-[#F5F1E9] text-transparent hover:border-[#827264]"}`}>{status === "missed" ? <X size={15} strokeWidth={3} /> : status === "canceled" ? <Ban size={15} strokeWidth={3} /> : <Check size={15} strokeWidth={3} />}</button> : <span className="text-xs text-[#827264]">Not active this month</span>}</td></tr>;
             })}
           </tbody>
         </table>
