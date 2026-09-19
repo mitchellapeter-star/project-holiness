@@ -300,6 +300,17 @@ button:active { transform: translateY(1px); }
   background-size: 80px 80px;
 }
 
+.rosary-pattern::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .1;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 L15 35 L30 50 L45 35 L60 50' stroke='%23B89030' stroke-width='0.6' fill='none'/%3E%3Cg fill='%23B89030'%3E%3Ccircle cx='0' cy='50' r='2.1'/%3E%3Ccircle cx='7.5' cy='42.5' r='1.4'/%3E%3Ccircle cx='15' cy='35' r='2.1'/%3E%3Ccircle cx='22.5' cy='42.5' r='1.4'/%3E%3Ccircle cx='30' cy='50' r='2.1'/%3E%3Ccircle cx='37.5' cy='42.5' r='1.4'/%3E%3Ccircle cx='45' cy='35' r='2.1'/%3E%3Ccircle cx='52.5' cy='42.5' r='1.4'/%3E%3Ccircle cx='60' cy='50' r='2.1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
 .ornament-border {
   position: relative;
 }
